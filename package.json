@@ -1,0 +1,107 @@
+{
+  "name": "archive-wasm",
+  "main": "src/archive.mjs",
+  "type": "module",
+  "author": "Vítor Vasconcellos",
+  "version": "0.0.1",
+  "license": "GPL-3.0-or-later",
+  "engines": {
+    "node": ">=18"
+  },
+  "description": "LibArchive compiled to WASM with a small bidge api for NodeJS",
+  "scripts": {
+    "docker": "docker build -o ./src ./docker",
+    "format": "eslint . --ext .js,.jsx,.mjs --rule 'prettier/prettier: off' --max-warnings 0 --fix --cache && prettier --write --loglevel=warn '**/*.{js,mjs,json}'",
+    "editorconfig": "curl -sSLOJ 'https://raw.githubusercontent.com/jokeyrhyme/standard-editorconfig/main/.editorconfig'"
+  },
+  "prettier": {
+    "semi": false,
+    "endOfLine": "lf",
+    "printWidth": 99,
+    "singleQuote": true,
+    "arrowParens": "avoid",
+    "trailingComma": "es5"
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "es2022": true,
+      "browser": false,
+      "commonjs": false,
+      "shared-node-browser": false
+    },
+    "rules": {
+      "no-void": [
+        "error",
+        {
+          "allowAsStatement": true
+        }
+      ],
+      "no-proto": "error",
+      "import/order": [
+        "error",
+        {
+          "alphabetize": {
+            "order": "asc"
+          },
+          "newlines-between": "always"
+        }
+      ],
+      "license-header/header": [
+        "error",
+        "PREAMBLE"
+      ],
+      "standard/no-callback-literal": "off"
+    },
+    "parser": "@babel/eslint-parser",
+    "plugins": [
+      "@babel",
+      "license-header"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "standard",
+      "plugin:import/recommended",
+      "plugin:prettier/recommended"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "*.mjs"
+        ],
+        "parserOptions": {
+          "babelOptions": {
+            "presets": [
+              [
+                "@babel/preset-env",
+                {
+                  "shippedProposals": true
+                }
+              ]
+            ]
+          }
+        }
+      }
+    ],
+    "parserOptions": {
+      "sourceType": "module",
+      "requireConfigFile": false
+    }
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.13",
+    "@babel/eslint-parser": "^7.18.9",
+    "@babel/eslint-plugin": "^7.18.10",
+    "@babel/preset-env": "^7.18.10",
+    "@types/node": "^20.6.0",
+    "eslint": "^8.23.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-license-header": "^0.6.0",
+    "eslint-plugin-n": "^15.2.5",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-promise": "^6.0.1",
+    "prettier": "2.7.1"
+  }
+}

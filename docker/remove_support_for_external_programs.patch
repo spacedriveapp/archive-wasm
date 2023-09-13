@@ -1,0 +1,48 @@
+diff --git a/libarchive/CMakeLists.txt b/libarchive/CMakeLists.txt
+index f7fdfb68..9d388bad 100644
+--- a/libarchive/CMakeLists.txt
++++ b/libarchive/CMakeLists.txt
+@@ -86,12 +86,9 @@ SET(libarchive_SOURCES
+   archive_read_support_filter_bzip2.c
+   archive_read_support_filter_compress.c
+   archive_read_support_filter_gzip.c
+-  archive_read_support_filter_grzip.c
+-  archive_read_support_filter_lrzip.c
+   archive_read_support_filter_lz4.c
+   archive_read_support_filter_lzop.c
+   archive_read_support_filter_none.c
+-  archive_read_support_filter_program.c
+   archive_read_support_filter_rpm.c
+   archive_read_support_filter_uu.c
+   archive_read_support_filter_xz.c
+@@ -134,13 +131,10 @@ SET(libarchive_SOURCES
+   archive_write_add_filter_by_name.c
+   archive_write_add_filter_bzip2.c
+   archive_write_add_filter_compress.c
+-  archive_write_add_filter_grzip.c
+   archive_write_add_filter_gzip.c
+-  archive_write_add_filter_lrzip.c
+   archive_write_add_filter_lz4.c
+   archive_write_add_filter_lzop.c
+   archive_write_add_filter_none.c
+-  archive_write_add_filter_program.c
+   archive_write_add_filter_uuencode.c
+   archive_write_add_filter_xz.c
+   archive_write_add_filter_zstd.c
+diff --git a/libarchive/archive_read_support_filter_all.c b/libarchive/archive_read_support_filter_all.c
+index edb508c1..caf2ed2e 100644
+--- a/libarchive/archive_read_support_filter_all.c
++++ b/libarchive/archive_read_support_filter_all.c
+@@ -63,12 +63,8 @@ archive_read_support_filter_all(struct archive *a)
+ 	archive_read_support_filter_uu(a);
+ 	/* The decode code doesn't use an outside library. */
+ 	archive_read_support_filter_rpm(a);
+-	/* The decode code always uses "lrzip -q -d" command-line. */
+-	archive_read_support_filter_lrzip(a);
+ 	/* Lzop decompress falls back to "lzop -d" command-line. */
+ 	archive_read_support_filter_lzop(a);
+-	/* The decode code always uses "grzip -d" command-line. */
+-	archive_read_support_filter_grzip(a);
+ 	/* Lz4 falls back to "lz4 -d" command-line program. */
+ 	archive_read_support_filter_lz4(a);
+ 	/* Zstd falls back to "zstd -d" command-line program. */
