@@ -25,92 +25,64 @@ import {
   getEntryPathName,
   getEntrySize,
   getEntryType,
-  hasEncryptedEntries,
   NULL,
 } from './wasm/bridge.mjs'
 
 /**
- * Registry to automatically free any unreferenced {@link Archive}
+ * Registry to automatically close archive when all of its entries get garbage collected
  * @type {FinalizationRegistry<number>}
  */
-const ArchiveRegistry = new FinalizationRegistry(pointer => {
-  closeArchive(pointer)
+const ArchiveRegistry = new FinalizationRegistry(archive => {
+  closeArchive(archive)
 })
 
 /**
- * @callback GetEntryData
- * @returns {ArrayBufferLike}
+ * Uncompress archive, iterate through all it's entries
+ *
+ * Supports the following formats:
+ * LZ4, LZO, LZMA, ZSTD, ZLIB, BZip2
+ *
+ * @param {ArrayBufferLike} data - Archive data
+ * @param {string} [passphrase] - Archive passphrase
+ * @yields {Entry}
  */
-
-/**
- * @typedef {Object} Entry
- * @property {number} size
- * @property {string} path
- * @property {import('./wasm/bridge.mjs').EntryType} type
- * @property {GetEntryData} data
- */
-
-export class Archive {
-  /** @type {Pointer} */
-  #buffer
-
-  /** @type {number} */
-  #archive
+export function* extract(data, passphrase) {
+  const marker = Object.create(null)
+  const buffer = new Pointer().fill(data, true)
+  const archive = openArchive(buffer, passphrase)
 
   /**
-   * Uncompress archives
-   *
-   * Supports the following formats:
-   * LZ4, LZO, LZMA, ZSTD, ZLIB, BZip2
-   *
-   * @param {ArrayBufferLike} data - Archive data
-   * @param {string} [passphrase] - Archive passphrase
+   * Associate the marker object with the archive pointer,
+   * which will in turn be present in all the entries object,
+   * so that when all of them get garbage collected,
+   * the marker will too and then trigger the closing of the archive pointer
    */
-  constructor(data, passphrase) {
-    this.#buffer = new Pointer().fill(data, true)
-    this.#archive = openArchive(this.#buffer, passphrase)
-    ArchiveRegistry.register(this, this.#archive)
-  }
+  ArchiveRegistry.register(marker, archive)
 
-  /**
-   * Detect if archive has encrypted data
-   * @returns {import('./wasm/bridge.mjs').Encryption} Wheter the given archive is encripted or not
-   */
-  get hasEncryptedEntries() {
-    return hasEncryptedEntries(this.#archive)
-  }
+  let entryPointer
+  while ((entryPointer = getNextEntry(archive)) !== NULL) {
+    const path = getEntryPathName(entryPointer)
+    const sizen = getEntrySize(entryPointer)
 
-  /**
-   * Iterate through all the archive's entries
-   *
-   * @yields {Entry}
-   */
-  *entries() {
-    while (true) {
-      const entryPointer = getNextEntry(this.#archive)
-      if (entryPointer === NULL) break
-
-      const path = getEntryPathName(entryPointer)
-      const sizen = getEntrySize(entryPointer)
-      const size = Number(sizen)
-      if (size > Number.MAX_SAFE_INTEGER) {
-        throw new Error(`Entry ${path} size exceeds MAX_SAFE_INTEGER: ${sizen}`)
-      }
-
-      /** @type {ArrayBufferLike} */
-      let data
-      const self = this
-
-      yield {
-        size,
-        path,
-        type: getEntryType(entryPointer),
-        get data() {
-          if (data == null) data = getFileData(self.#archive, size).read()
-          return data
-        },
-      }
+    const size = Number(sizen)
+    if (size > Number.MAX_SAFE_INTEGER) {
+      throw new Error(`Entry ${path} size exceeds MAX_SAFE_INTEGER: ${sizen}`)
     }
+
+    /** @type {ArrayBufferLike} */
+    let data
+    const entry = {
+      size,
+      path,
+      type: getEntryType(entryPointer),
+      get data() {
+        if (data == null) data = getFileData(archive, size).read()
+        return data
+      },
+      [Symbol('marker')]: marker,
+    }
+
+    yield entry
   }
 }
 

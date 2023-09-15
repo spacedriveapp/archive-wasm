@@ -16,11 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// @ts-expect-error
+// @ts-ignore
 // eslint-disable-next-line import/no-unresolved
 import archiveWasm from './libarchive.mjs'
 
 export const NULL = 0
+
+// Must be kept in sync with the definition in ../../docker/wrapper.c
+const EPASS = -37455
 
 /**
  * @callback CWrap
@@ -72,41 +75,25 @@ const ReturnCode = {
   FATAL: -30,
 }
 
-export class RetryError extends Error {
+export class ArchiveError extends Error {
   /**
-   * Error used when a notive call returns {@link ReturnCode.RETRY}
+   * Main error class
    *
+   * @param {number} code Error code
    * @param {string} message Error message
    */
-  constructor(message) {
+  constructor(code, message) {
     super(message)
-    this.name = RetryError.name
+    this.code = code
+    this.name = this.constructor.name
   }
 }
 
-export class FatalError extends Error {
-  /**
-   * Error used when a notive call returns {@link ReturnCode.FATAL}
-   *
-   * @param {string} message Error message
-   */
-  constructor(message) {
-    super(message)
-    this.name = FatalError.name
-  }
-}
-
-export class FailedError extends Error {
-  /**
-   * Error used when a notive call returns {@link ReturnCode.FAILED}
-   *
-   * @param {string} message Error message
-   */
-  constructor(message) {
-    super(message)
-    this.name = FailedError.name
-  }
-}
+export class NullError extends ArchiveError {}
+export class RetryError extends ArchiveError {}
+export class FatalError extends ArchiveError {}
+export class FailedError extends ArchiveError {}
+export class PasswordError extends ArchiveError {}
 
 /**
  * void * malloc(size_t size);
@@ -176,7 +163,7 @@ export class Pointer {
    *
    * .. note::
    *    When grow is false, this method throws when trying to fill a NULL pointer,
-   *    otherwise it only fills memory up to {@link Pointer.size}
+   *    otherwise it will realloc the Pointer so it can fit the given data
    *
    * @param {bigint | number | string | ArrayLike.<number> | ArrayBufferLike} data Data to copy to memory
    * @param {boolean} [grow=false] - Wheter to alloc more data to make sure data fits inside {@link Pointer}
@@ -299,10 +286,22 @@ const clearError = /** @type {clearErrorCb} */ (
  *
  * @callback GetErrorCb
  * @param {number} archive Pointer to archive struct
- * @returns {string} Last error that occurred, empty string if no error has occurred yet
+ * @returns {string} Last error message that occurred, empty string if no error has occurred yet
  */
 const getError = /** @type {GetErrorCb} */ (
   archive.cwrap('archive_error_string', 'string', ['number'])
+)
+
+/**
+ * Get numeric error of the last error that occured
+ * int archive_errno(struct archive *archive);
+ *
+ * @callback getErrorCodeCb
+ * @param {number} archive Pointer to archive struct
+ * @returns {number} Last error code that occurred, zero if no error has occurred yet
+ */
+const getErrorCode = /** @type {getErrorCodeCb} */ (
+  archive.cwrap('archive_errno', 'number', ['number'])
 )
 
 /**
@@ -320,6 +319,9 @@ function errorCheck(cb, checkReturn) {
    */
   function errorCheckWrapper(archive, ...args) {
     const returnCode = cb(archive, ...args)
+
+    const errorMsg = getError(archive) ?? 'Unknown'
+    const errorCode = getErrorCode(archive)
     try {
       if (checkReturn) {
         switch (returnCode) {
@@ -328,22 +330,22 @@ function errorCheck(cb, checkReturn) {
           case ReturnCode.EOF:
             return false
           case ReturnCode.WARN:
-            console.warn(`LibArchive.${cb.name}: ${getError(archive) || 'Unknown'}`)
+            console.warn(`LibArchive.${cb.name}: ${errorMsg}`)
             return false
           case ReturnCode.RETRY:
-            throw new RetryError(`${cb.name}:` + (getError(archive) || 'Unknown'))
+            throw new RetryError(errorCode, `${cb.name}: ${errorMsg}`)
           case ReturnCode.FATAL:
-            throw new FatalError(`${cb.name}:` + (getError(archive) || 'Unknown'))
+            throw new FatalError(errorCode, `${cb.name}: ${errorMsg}`)
           case ReturnCode.FAILED:
-            throw new FailedError(`${cb.name}:` + (getError(archive) || 'Unknown'))
+            throw new FailedError(errorCode, `${cb.name}: ${errorMsg}`)
           default:
             throw new Error(`LibArchive.${cb.name}: Invalid return code`)
         }
       } else {
         const errorMsg = getError(archive)
-        if (errorMsg !== '') throw new Error(errorMsg)
+        if (errorCode !== 0) throw new ArchiveError(errorCode, errorMsg)
         if (checkReturn === null && (returnCode === NULL || returnCode === ''))
-          throw new Error(`LibArchive.${cb.name}: returned NULL`)
+          throw new NullError(-1, `LibArchive.${cb.name}: returned NULL`)
         return returnCode
       }
     } finally {
@@ -383,11 +385,12 @@ export function openArchive(buffer, passphrase) {
   const archive = _openArchive(buffer.pointer, buffer.size, passphrase)
   if (archive === NULL) throw new Error('Failed to allocate archive')
 
-  const errorMsg = getError(archive)
-  if (errorMsg !== '') {
+  const errorCode = getErrorCode(archive)
+  if (errorCode !== 0) {
     clearError(archive)
     closeArchive(archive)
-    throw new Error(errorMsg)
+    const Err = errorCode === EPASS ? PasswordError : ArchiveError
+    throw new Err(errorCode, getError(archive))
   }
 
   return archive
@@ -548,21 +551,3 @@ export const Encryption = {
   ENCRYPTED: 1,
   PLAIN: 0,
 }
-
-/**
- * Check wheter the current entry is encrypted
- * int archive_read_has_encrypted_entries(struct archive *archive);
- *
- * .. note::
- *    In general, this function will return values below zero when the reader
- *    is uncertain or totally incapable of encryption support.
- *    When this function returns 0 you can be sure that the reader supports
- *    encryption detection but no encrypted entries have been found yet.
- *
- * @callback HasEncryptedEntriesCb
- * @param {number} archive Pointer to archive struct
- * @returns {Encryption} Wheter the given archive is encripted or not
- */
-export const hasEncryptedEntries = /** @type {HasEncryptedEntriesCb} */ (
-  archive.cwrap('archive_read_has_encrypted_entries', 'number', ['number'])
-)

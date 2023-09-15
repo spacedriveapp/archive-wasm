@@ -10,9 +10,20 @@
   },
   "description": "LibArchive compiled to WASM with a idiomatic JS api",
   "scripts": {
-    "docker": "docker build -o ./src ./docker",
+    "test": "ava",
+    "wasm": "./docker/wasm.sh",
+    "build": "tsc && npm run wasm",
     "format": "eslint . --ext .js,.jsx,.mjs --rule 'prettier/prettier: off' --max-warnings 0 --fix --cache && prettier --write --log-level=warn '**/*.{js,mjs,json}'",
     "editorconfig": "curl -sSLOJ 'https://raw.githubusercontent.com/jokeyrhyme/standard-editorconfig/main/.editorconfig'"
+  },
+  "ava": {
+    "timeout": "2m",
+    "files": [
+      "test/**/*"
+    ],
+    "extensions": {
+      "mjs": true
+    }
   },
   "prettier": {
     "semi": false,
@@ -102,6 +113,7 @@
     "@babel/eslint-plugin": "^7.22.10",
     "@babel/preset-env": "^7.22.15",
     "@types/node": "^20.6.0",
+    "ava": "^5.3.1",
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-config-standard": "^17.1.0",

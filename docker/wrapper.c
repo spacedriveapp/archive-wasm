@@ -11,7 +11,9 @@
 #define ARCHIVE_ERRNO_MISC (-1)
 #endif
 
-#define empty_str(str) (str == NULL || str[0] != '\0')
+#define EPASS (-37455)
+
+#define empty_str(str) (str == NULL || str[0] == '\0')
 
 struct archive *archive_open(const void *buf, size_t size,
                              const char *passphrase) {
@@ -33,7 +35,12 @@ struct archive *archive_open(const void *buf, size_t size,
    */
   archive_read_support_format_all(archive);
 
-  if (!empty_str(passphrase)) {
+  if (empty_str(passphrase)) {
+    if (archive_read_has_encrypted_entries(archive) == 1) {
+      archive_set_error(archive, EPASS, "Archive requires password");
+      return archive;
+    }
+  } else {
     /**
      * ARCHIVE_OK | ARCHIVE_FATAL
      * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_add_passphrase.c#L87-L108

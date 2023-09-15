@@ -79,7 +79,6 @@ dkms.conf
 # Icon must end with two \r
 Icon
 
-
 # Thumbnails
 ._*
 
@@ -290,4 +289,5 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/Node,Windows,Linux,macOS,VisualStudioCode,C
 
-dist/
+*.wasm
+src/wasm/libarchive.mjs

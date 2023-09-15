@@ -19,7 +19,6 @@
     "noImplicitReturns": true,
     "resolveJsonModule": true,
     "noUnusedParameters": true,
-    "emitDeclarationOnly": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": true,
     "noUncheckedIndexedAccess": true,

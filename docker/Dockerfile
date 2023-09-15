@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
 FROM emscripten/emsdk:3.1.45 as base
@@ -7,32 +9,8 @@ SHELL ["/bin/bash", "-euxc"]
 RUN apt-get update -y && apt-get install -y pkg-config
 
 # Change emscripten default compilation configs
-RUN <<EOT
-  set -- WASM true \
-		STRICT true \
-		POLYFILL false \
-		EXPORT_ES6 true \
-		INVOKE_RUN false \
-		MODULARIZE true \
-		FILESYSTEM false \
-		RELOCATABLE true \
-		WASM_BIGINT true \
-		STANDALONE_WASM true \
-		SUPPORT_LONGJMP "'wasm'" \
-		SUPPORT_BIG_ENDIAN true \
-		ALLOW_MEMORY_GROWTH true \
-		MIN_IE_VERSION -1 \
-		MIN_NODE_VERSION 180000 \
-		MIN_EDGE_VERSION -1 \
-		MIN_CHROME_VERSION 109 \
-		MIN_SAFARI_VERSION 150601 \
-		MIN_FIREFOX_VERSION 115
-
-	while [ "$#" -gt 0 ]; do
-		sed -i -e "s/^\s*var\s\{1,\}${1}\s\{1,\}=.*$/var ${1} = ${2};/g" /emsdk/upstream/emscripten/src/settings.js
-		shift 2
-	done
-EOT
+COPY settings.sh /settings.sh
+RUN /settings.sh
 
 ENV CFLAGS='-r -Oz -flto -fpic -fwasm-exceptions --minify=0 --closure=0 --no-entry'
 ENV CXXFLAGS="$CFLAGS"
@@ -271,6 +249,7 @@ COPY --from=libarchive $SYSROOT $SYSROOT
 ENV EMCC_CFLAGS='-DLIBARCHIVE_STATIC'
 RUN emcc -c ./wrapper.c -I "${SYSROOT}/include" $CFLAGS
 RUN mkdir wasm
+RUN echo "// @ts-nocheck" >pre.js
 RUN emcc ./wrapper.o \
 	"${SYSROOT}/lib/libarchive.a" \
 	"${SYSROOT}/lib/liblz4.a" \
@@ -281,7 +260,7 @@ RUN emcc ./wrapper.o \
 	"${SYSROOT}/lib/libmbedx509.a" \
 	"${SYSROOT}/lib/libmbedcrypto.a" \
 	"${SYSROOT}/lib/libbz2_static.a" \
-	-o ./wasm/libarchive.mjs $CFLAGS --lto --pic --strip-all \
+	-o ./wasm/libarchive.mjs $CFLAGS --lto --pic --strip-all --extern-pre-js=/src/pre.js \
 	-s USE_ZLIB=1 \
 	-s POLYFILL=0 \
 	-s EXPORT_ES6=1 \
