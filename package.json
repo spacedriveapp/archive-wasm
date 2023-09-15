@@ -1,6 +1,6 @@
 {
   "name": "archive-wasm",
-  "main": "src/archive.mjs",
+  "main": "dist/archive.mjs",
   "type": "module",
   "author": "Vítor Vasconcellos",
   "version": "1.0.0",
@@ -8,6 +8,17 @@
   "engines": {
     "node": ">=18"
   },
+  "keywords": [
+    "wasm",
+    "tar",
+    "zip",
+    "zst",
+    "gzip",
+    "zstd",
+    "unzip",
+    "archive",
+    "libarchive"
+  ],
   "description": "LibArchive compiled to WASM with a idiomatic JS api",
   "scripts": {
     "test": "ava",
