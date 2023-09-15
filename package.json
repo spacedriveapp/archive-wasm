@@ -2,8 +2,8 @@
   "name": "archive-wasm",
   "main": "src/archive.mjs",
   "type": "module",
-  "author": "Vitor Vasconcellos",
-  "version": "0.0.1",
+  "author": "Vítor Vasconcellos",
+  "version": "1.0.0",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18"
