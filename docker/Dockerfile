@@ -1,13 +1,43 @@
+ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
+
 FROM emscripten/emsdk:3.1.45 as base
 
-# Build internal emsdk zlib version
-RUN embuilder build zlib
+SHELL ["/bin/bash", "-euxc"]
 
-# Create prefix
-WORKDIR /opt/build
+RUN apt-get update -y && apt-get install -y pkg-config
+
+# Change emscripten default compilation configs
+RUN <<EOT
+  set -- WASM true \
+		STRICT true \
+		POLYFILL false \
+		EXPORT_ES6 true \
+		INVOKE_RUN false \
+		MODULARIZE true \
+		FILESYSTEM false \
+		RELOCATABLE true \
+		WASM_BIGINT true \
+		STANDALONE_WASM true \
+		SUPPORT_LONGJMP "'wasm'" \
+		SUPPORT_BIG_ENDIAN true \
+		ALLOW_MEMORY_GROWTH true \
+		MIN_IE_VERSION -1 \
+		MIN_NODE_VERSION 180000 \
+		MIN_EDGE_VERSION -1 \
+		MIN_CHROME_VERSION 109 \
+		MIN_SAFARI_VERSION 150601 \
+		MIN_FIREFOX_VERSION 115
+
+	while [ "$#" -gt 0 ]; do
+		sed -i -e "s/^\s*var\s\{1,\}${1}\s\{1,\}=.*$/var ${1} = ${2};/g" /emsdk/upstream/emscripten/src/settings.js
+		shift 2
+	done
+EOT
+
+ENV CFLAGS='-r -Oz -flto -fpic -fwasm-exceptions --minify=0 --closure=0 --no-entry'
+ENV CXXFLAGS="$CFLAGS"
+
 WORKDIR /src
-
-ENV ENVIRONMENT=node
 
 # --
 
@@ -24,12 +54,9 @@ RUN find . -type f \( -name '*.c' -o -name '*.h' \) -exec \
 # Compile & install
 WORKDIR /src/build
 RUN emcmake cmake \
-	-DCMAKE_SYSROOT=/emsdk/upstream/emscripten/cache/sysroot \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_INSTALL_PREFIX=/opt/build \
-	-DCMAKE_PREFIX_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
-	-DCMAKE_FIND_ROOT_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DENABLE_TESTING=Off \
 	-DENABLE_PROGRAMS=Off \
@@ -48,14 +75,12 @@ RUN curl -fsSL https://github.com/lz4/lz4/archive/refs/tags/v1.9.4.tar.gz \
 # Compile & install
 WORKDIR /src/build/cmake/build
 RUN emcmake cmake \
-	-DCMAKE_SYSROOT=/emsdk/upstream/emscripten/cache/sysroot \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_INSTALL_PREFIX=/opt/build \
-	-DCMAKE_PREFIX_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
-	-DCMAKE_FIND_ROOT_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DLZ4_BUILD_CLI=Off \
+	-DLZ4_BUILD_LEGACY_LZ4C=Off \
 	..
 RUN emmake make -j$(nproc)
 RUN emmake make install
@@ -71,15 +96,14 @@ RUN curl -fsSL https://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
 # Compile & install
 WORKDIR /src/build
 RUN emcmake cmake \
-	-DCMAKE_SYSROOT=/emsdk/upstream/emscripten/cache/sysroot \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_INSTALL_PREFIX=/opt/build \
-	-DCMAKE_PREFIX_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
-	-DCMAKE_FIND_ROOT_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
+	-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	..
-RUN emmake make -j$(nproc)
+RUN emmake make -j$(nproc) lzo_static_lib
+RUN touch lzopack.js lzotest.js simple.js testmini.js
 RUN emmake make install
 
 # --
@@ -97,13 +121,10 @@ RUN sed -i -e 's/test_big_endian(WORDS_BIGENDIAN)/set(WORDS_BIGENDIAN OFF)/g' cm
 WORKDIR /src/build
 # Note: DENABLE_THREADS=OFF must be uppercase
 RUN emcmake cmake \
-	-DCMAKE_SYSROOT=/emsdk/upstream/emscripten/cache/sysroot \
 	-DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=On \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_INSTALL_PREFIX=/opt/build \
-	-DCMAKE_PREFIX_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
-	-DCMAKE_FIND_ROOT_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
+	-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DHAVE_POSIX_SPAWN=0 -DHAVE_PTHREAD_H=0 -DHAVE_LIBPTHREAD=0 -DPTHREAD_IN_LIBC=0 -DHAVE_POSIX_SPAWNP=0 \
 	-DWORDS_BIGENDIAN=0 \
@@ -129,12 +150,9 @@ RUN curl -fsSL https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.
 # Compile & install
 WORKDIR /src/build/cmake/build
 RUN emcmake cmake \
-	-DCMAKE_SYSROOT=/emsdk/upstream/emscripten/cache/sysroot \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_INSTALL_PREFIX=/opt/build \
-	-DCMAKE_PREFIX_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
-	-DCMAKE_FIND_ROOT_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DZSTD_BUILD_TESTS=Off \
 	-DZSTD_BUILD_STATIC=On \
@@ -157,12 +175,9 @@ RUN curl -fsSL https://github.com/libarchive/bzip2/archive/1ea1ac188ad4b9cb662e3
 # Compile & install
 WORKDIR /src/build
 RUN emcmake cmake \
-	-DCMAKE_SYSROOT=/emsdk/upstream/emscripten/cache/sysroot \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_INSTALL_PREFIX=/opt/build \
-	-DCMAKE_PREFIX_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
-	-DCMAKE_FIND_ROOT_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DENABLE_APP=Off \
 	-DENABLE_DOCS=Off \
@@ -178,6 +193,8 @@ RUN emmake make install
 
 FROM base as libarchive
 
+ARG SYSROOT
+
 # Download & de-compress
 RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.2/libarchive-3.7.2.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
@@ -186,30 +203,28 @@ RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.2
 COPY ./remove_support_for_external_programs.patch ./
 RUN patch -p1 -i remove_support_for_external_programs.patch
 
+# Build internal emsdk zlib version
+RUN embuilder --lto --pic build zlib
+
 # Copy compiled dependencies
-COPY --from=mbedtls /opt/build /opt/build
-COPY --from=lz4 /opt/build /opt/build
-COPY --from=lzo /opt/build /opt/build
-COPY --from=lzma /opt/build /opt/build
-COPY --from=zstd /opt/build /opt/build
-COPY --from=bzip /opt/build /opt/build
+COPY --from=mbedtls $SYSROOT $SYSROOT
+COPY --from=lz4 $SYSROOT $SYSROOT
+COPY --from=lzo $SYSROOT $SYSROOT
+COPY --from=lzma $SYSROOT $SYSROOT
+COPY --from=zstd $SYSROOT $SYSROOT
+COPY --from=bzip $SYSROOT $SYSROOT
 
 # Compile & install
 WORKDIR /src/_build
 RUN emcmake cmake \
-	-DCMAKE_SYSROOT=/emsdk/upstream/emscripten/cache/sysroot \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_INSTALL_PREFIX=/opt/build \
-	-DCMAKE_PREFIX_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
-	-DCMAKE_FIND_ROOT_PATH='/opt/build;/emsdk/upstream/emscripten/cache/sysroot' \
+	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DHAVE_POSIX_SPAWN=0 -DHAVE_PTHREAD_H=0 -DHAVE_LIBPTHREAD=0 -DPTHREAD_IN_LIBC=0 -DHAVE_POSIX_SPAWNP=0 \
-	-DHAVE_VFORK=0 -DHAVE_FORK=0 \
+	-DHAVE_VFORK=0 -DHAVE_FORK=0 -DHAVE__FSEEKI64=0 \
+	-DHAVE_WCSCPY=1 -DHAVE_WCSLEN=1 \
 	-DENABLE_MBEDTLS=On \
-	-DMBEDTLS_LIBRARY=/opt/build/lib/libmbedtls.a \
-	-DMBEDX509_LIBRARY=/opt/build/lib/libmbedx509.a \
-	-DMBEDCRYPTO_LIBRARY=/opt/build/lib/libmbedcrypto.a \
 	-DENABLE_NETTLE=Off \
 	-DENABLE_OPENSSL=Off \
 	-DENABLE_LIBB2=Off \
@@ -218,8 +233,9 @@ RUN emcmake cmake \
 	-DENABLE_LZMA=On \
 	-DENABLE_ZSTD=On \
 	-DENABLE_ZLIB=On \
+	-DZLIB_LIBRARY=${SYSROOT}/lib/wasm64-emscripten/lto-pic/libz.a \
 	-DENABLE_BZip2=On \
-	-DBZIP2_LIBRARIES=/opt/build/lib/libbz2_static.a \
+	-DBZIP2_LIBRARIES=${SYSROOT}/lib/libbz2_static.a \
 	-DENABLE_LIBXML2=Off \
 	-DENABLE_EXPAT=Off \
 	-DENABLE_PCREPOSIX=Off \
@@ -239,55 +255,45 @@ RUN emmake make -j$(nproc) 2>&1
 RUN emmake make install
 
 # --
+
 FROM base as wrapper
+
+ARG SYSROOT
 
 # Copy wrapper source and config
 COPY ./wrapper.c ./
 COPY ./lib.exports ./
 
 # Copy compiled dependencies
-COPY --from=libarchive /opt/build /opt/build
+COPY --from=libarchive $SYSROOT $SYSROOT
 
 # Compile
-RUN emcc -c ./wrapper.c -I /opt/build/include -I /emsdk/upstream/emscripten/cache/sysroot/include
-RUN mkdir out
+ENV EMCC_CFLAGS='-DLIBARCHIVE_STATIC'
+RUN emcc -c ./wrapper.c -I "${SYSROOT}/include" $CFLAGS
+RUN mkdir wasm
 RUN emcc ./wrapper.o \
-	/opt/build/lib/libarchive.a \
-	/opt/build/lib/liblz4.a \
-	/opt/build/lib/liblzo2.a \
-	/opt/build/lib/liblzma.a \
-	/opt/build/lib/libzstd.a \
-	/opt/build/lib/libmbedtls.a \
-	/opt/build/lib/libmbedx509.a \
-	/opt/build/lib/libmbedcrypto.a \
-	/opt/build/lib/libbz2_static.a \
-	-o ./out/libarchive.mjs -Oz -flto \
-	-s WASM=1 \
-	-s STRICT=1 \
+	"${SYSROOT}/lib/libarchive.a" \
+	"${SYSROOT}/lib/liblz4.a" \
+	"${SYSROOT}/lib/liblzo2.a" \
+	"${SYSROOT}/lib/liblzma.a" \
+	"${SYSROOT}/lib/libzstd.a" \
+	"${SYSROOT}/lib/libmbedtls.a" \
+	"${SYSROOT}/lib/libmbedx509.a" \
+	"${SYSROOT}/lib/libmbedcrypto.a" \
+	"${SYSROOT}/lib/libbz2_static.a" \
+	-o ./wasm/libarchive.mjs $CFLAGS --lto --pic --strip-all \
 	-s USE_ZLIB=1 \
-	-s FILESYSTEM=0 \
-	-s STANDALONE_WASM=1 \
-	-s ALLOW_MEMORY_GROWTH=1 \
-	-s EXPORTED_FUNCTIONS=@$PWD/lib.exports \
-	-s EXPORTED_RUNTIME_METHODS=cwrap \
-	--minify=0 \
-	--no-entry \
-	--strip-all
-
-# --
-
-FROM base as format
-
-ENV DENO_INSTALL=/usr/local
-
-RUN curl -fsSL https://deno.land/x/install/install.sh | sh
-
-COPY --from=wrapper /src/out /wasm
-
-RUN deno fmt /wasm/libarchive.mjs
+	-s POLYFILL=0 \
+	-s EXPORT_ES6=1 \
+	-s INVOKE_RUN=0 \
+	-s MODULARIZE=1 \
+	-s EXPORTED_FUNCTIONS=@/src/lib.exports \
+	-s EMIT_PRODUCERS_SECTION=1 \
+	-s EMIT_EMSCRIPTEN_LICENSE=1 \
+	-s EXPORTED_RUNTIME_METHODS=cwrap
 
 # --
 
 FROM scratch
 
-COPY --from=format /wasm /wasm
+COPY --from=wrapper /src/wasm /wasm

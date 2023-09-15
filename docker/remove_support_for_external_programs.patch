@@ -1,8 +1,17 @@
 diff --git a/libarchive/CMakeLists.txt b/libarchive/CMakeLists.txt
-index f7fdfb68..9d388bad 100644
+index f7fdfb68..a37bd336 100644
 --- a/libarchive/CMakeLists.txt
 +++ b/libarchive/CMakeLists.txt
-@@ -86,12 +86,9 @@ SET(libarchive_SOURCES
+@@ -60,8 +60,6 @@ SET(libarchive_SOURCES
+   archive_ppmd7.c
+   archive_ppmd7_private.h
+   archive_private.h
+-  archive_random.c
+-  archive_random_private.h
+   archive_rb.c
+   archive_rb.h
+   archive_read.c
+@@ -86,12 +84,9 @@ SET(libarchive_SOURCES
    archive_read_support_filter_bzip2.c
    archive_read_support_filter_compress.c
    archive_read_support_filter_gzip.c
@@ -15,7 +24,7 @@ index f7fdfb68..9d388bad 100644
    archive_read_support_filter_rpm.c
    archive_read_support_filter_uu.c
    archive_read_support_filter_xz.c
-@@ -134,13 +131,10 @@ SET(libarchive_SOURCES
+@@ -134,13 +129,10 @@ SET(libarchive_SOURCES
    archive_write_add_filter_by_name.c
    archive_write_add_filter_bzip2.c
    archive_write_add_filter_compress.c
@@ -29,6 +38,33 @@ index f7fdfb68..9d388bad 100644
    archive_write_add_filter_uuencode.c
    archive_write_add_filter_xz.c
    archive_write_add_filter_zstd.c
+diff --git a/libarchive/archive_read_append_filter.c b/libarchive/archive_read_append_filter.c
+index 25dc4b2a..e17e7e1a 100644
+--- a/libarchive/archive_read_append_filter.c
++++ b/libarchive/archive_read_append_filter.c
+@@ -97,10 +97,6 @@ archive_read_append_filter(struct archive *_a, int code)
+       strcpy(str, "lzip");
+       r1 = archive_read_support_filter_lzip(_a);
+       break;
+-    case ARCHIVE_FILTER_LRZIP:
+-      strcpy(str, "lrzip");
+-      r1 = archive_read_support_filter_lrzip(_a);
+-      break;
+     default:
+       archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
+           "Invalid filter code specified");
+diff --git a/libarchive/archive_read_private.h b/libarchive/archive_read_private.h
+index 383405d5..095c0cb6 100644
+--- a/libarchive/archive_read_private.h
++++ b/libarchive/archive_read_private.h
+@@ -254,7 +254,6 @@ int64_t	__archive_read_filter_seek(struct archive_read_filter *, int64_t, int);
+ int64_t	__archive_read_consume(struct archive_read *, int64_t);
+ int64_t	__archive_read_filter_consume(struct archive_read_filter *, int64_t);
+ int __archive_read_header(struct archive_read *, struct archive_entry *);
+-int __archive_read_program(struct archive_read_filter *, const char *);
+ void __archive_read_free_filters(struct archive_read *);
+ struct archive_read_extract *__archive_read_get_extract(struct archive_read *);
+ 
 diff --git a/libarchive/archive_read_support_filter_all.c b/libarchive/archive_read_support_filter_all.c
 index edb508c1..caf2ed2e 100644
 --- a/libarchive/archive_read_support_filter_all.c
@@ -46,3 +82,23 @@ index edb508c1..caf2ed2e 100644
  	/* Lz4 falls back to "lz4 -d" command-line program. */
  	archive_read_support_filter_lz4(a);
  	/* Zstd falls back to "zstd -d" command-line program. */
+diff --git a/libarchive/archive_read_support_filter_by_code.c b/libarchive/archive_read_support_filter_by_code.c
+index 94c4af69..04429bbc 100644
+--- a/libarchive/archive_read_support_filter_by_code.c
++++ b/libarchive/archive_read_support_filter_by_code.c
+@@ -63,15 +63,9 @@ archive_read_support_filter_by_code(struct archive *a, int filter_code)
+ 	case ARCHIVE_FILTER_LZIP:
+ 		return archive_read_support_filter_lzip(a);
+ 		break;
+-	case ARCHIVE_FILTER_LRZIP:
+-		return archive_read_support_filter_lrzip(a);
+-		break;
+ 	case ARCHIVE_FILTER_LZOP:
+ 		return archive_read_support_filter_lzop(a);
+ 		break;
+-	case ARCHIVE_FILTER_GRZIP:
+-		return archive_read_support_filter_grzip(a);
+-		break;
+ 	case ARCHIVE_FILTER_LZ4:
+ 		return archive_read_support_filter_lz4(a);
+ 		break;

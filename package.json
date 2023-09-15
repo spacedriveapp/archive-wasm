@@ -2,16 +2,16 @@
   "name": "archive-wasm",
   "main": "src/archive.mjs",
   "type": "module",
-  "author": "Vítor Vasconcellos",
+  "author": "Vitor Vasconcellos",
   "version": "0.0.1",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18"
   },
-  "description": "LibArchive compiled to WASM with a small bidge api for NodeJS",
+  "description": "LibArchive compiled to WASM with a idiomatic JS api",
   "scripts": {
     "docker": "docker build -o ./src ./docker",
-    "format": "eslint . --ext .js,.jsx,.mjs --rule 'prettier/prettier: off' --max-warnings 0 --fix --cache && prettier --write --loglevel=warn '**/*.{js,mjs,json}'",
+    "format": "eslint . --ext .js,.jsx,.mjs --rule 'prettier/prettier: off' --max-warnings 0 --fix --cache && prettier --write --log-level=warn '**/*.{js,mjs,json}'",
     "editorconfig": "curl -sSLOJ 'https://raw.githubusercontent.com/jokeyrhyme/standard-editorconfig/main/.editorconfig'"
   },
   "prettier": {
@@ -81,6 +81,14 @@
             ]
           }
         }
+      },
+      {
+        "files": [
+          "src/wasm/libarchive.mjs"
+        ],
+        "rules": {
+          "license-header/header": "off"
+        }
       }
     ],
     "parserOptions": {
@@ -89,19 +97,20 @@
     }
   },
   "devDependencies": {
-    "@babel/core": "^7.18.13",
-    "@babel/eslint-parser": "^7.18.9",
-    "@babel/eslint-plugin": "^7.18.10",
-    "@babel/preset-env": "^7.18.10",
+    "@babel/core": "^7.22.19",
+    "@babel/eslint-parser": "^7.22.15",
+    "@babel/eslint-plugin": "^7.22.10",
+    "@babel/preset-env": "^7.22.15",
     "@types/node": "^20.6.0",
-    "eslint": "^8.23.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.26.0",
+    "eslint": "^8.49.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.28.1",
     "eslint-plugin-license-header": "^0.6.0",
-    "eslint-plugin-n": "^15.2.5",
-    "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-promise": "^6.0.1",
-    "prettier": "2.7.1"
+    "eslint-plugin-n": "^16.1.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "prettier": "3.0.3",
+    "typescript": "^5.2.2"
   }
 }

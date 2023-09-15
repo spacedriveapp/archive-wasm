@@ -1,14 +1,12 @@
-[
-    "_archive_open",
-    "_get_next_entry",
-    "_get_filedata",
-    "_archive_read_data_skip",
-    "_archive_close",
-    "_archive_entry_size",
-    "_archive_entry_pathname",
-    "_archive_entry_filetype",
-    "_archive_error_string",
-    "_archive_read_has_encrypted_entries",
-    "_malloc",
-    "_free",
-]
+_archive_open
+_get_next_entry
+_get_filedata
+_archive_read_free
+_archive_entry_size
+_archive_entry_pathname_utf8
+_archive_entry_filetype
+_archive_error_string
+_archive_clear_error
+_archive_read_has_encrypted_entries
+_malloc
+_free

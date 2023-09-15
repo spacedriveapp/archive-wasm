@@ -1,61 +1,162 @@
-#define LIBARCHIVE_STATIC
-
-#include "emscripten.h"
-#include <stdlib.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
 #include <archive.h>
 #include <archive_entry.h>
 
+// https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_platform.h#L223-L225
+#ifndef ARCHIVE_ERRNO_MISC
+#define ARCHIVE_ERRNO_MISC (-1)
+#endif
 
-EMSCRIPTEN_KEEPALIVE
-void* archive_open( const void *buf, size_t size, const char * passphrase ) {
-  struct archive *a;
-  int r;
+#define empty_str(str) (str == NULL || str[0] != '\0')
 
-  a = archive_read_new();
-  archive_read_support_filter_all(a);
-  archive_read_support_format_all(a);
-
-  if( passphrase ){
-    archive_read_add_passphrase(a, passphrase);
-  }
-
-  r = archive_read_open_memory(a, buf, size);
-  if (r != ARCHIVE_OK){
-    fprintf(stderr, "Memory read error %d\n",r);
-    fprintf(stderr, "%s\n",archive_error_string(a));
-  }
-  return a;
-}
-
-EMSCRIPTEN_KEEPALIVE
-const void* get_next_entry(void *archive) {
-  struct archive_entry *entry;
-  if( archive_read_next_header(archive,&entry) == ARCHIVE_OK ){
-    return entry;
-  }else{
+struct archive *archive_open(const void *buf, size_t size,
+                             const char *passphrase) {
+  // https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read.c#L88-L108
+  struct archive *archive = archive_read_new();
+  if (archive == NULL) {
     return NULL;
   }
+
+  /**
+   * Always returns ARCHIVE_OK
+   * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_support_filter_all.c#L77-L84
+   */
+  archive_read_support_filter_all(archive);
+
+  /**
+   * Always returns ARCHIVE_OK
+   * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_support_format_all.c#L81-L88
+   */
+  archive_read_support_format_all(archive);
+
+  if (!empty_str(passphrase)) {
+    /**
+     * ARCHIVE_OK | ARCHIVE_FATAL
+     * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_add_passphrase.c#L87-L108
+     */
+    if (archive_read_add_passphrase(archive, passphrase) != ARCHIVE_OK) {
+      // Return the allocated archive to allow the JS side to read the error
+      return archive;
+    }
+  }
+
+  // Can be any error code from what I could gleam from the source code
+  int code = archive_read_open_memory(archive, buf, size);
+  if (code == ARCHIVE_RETRY) {
+    // ¯\_(ツ)_/¯
+    code = archive_read_open_memory(archive, buf, size);
+    if (code == ARCHIVE_RETRY) {
+      code = ARCHIVE_FATAL;
+      if (empty_str(archive_error_string(archive))) {
+        archive_set_error(archive, ARCHIVE_ERRNO_MISC,
+                          "Retry for archive_read_open_memory failed");
+      }
+    }
+  }
+  if (code != ARCHIVE_OK) {
+    if (code == ARCHIVE_WARN) {
+      const char *error = archive_error_string(archive);
+      fprintf(stderr, "LibArchive.openArchive: %s",
+              error == NULL ? "Unknown warning" : error);
+      archive_clear_error(archive);
+    } else {
+      // Return the allocated archive to allow the JS side to read the error
+      return archive;
+    }
+  }
+
+  return archive;
 }
 
-EMSCRIPTEN_KEEPALIVE
-void* get_filedata(void *archive,size_t buffsize) {
-  void *buff = malloc( buffsize );
-  int read_size = archive_read_data(archive,buff,buffsize);
-  if( read_size < 0 ){
-    fprintf(stderr, "Error occured while reading file");
-    return (void*) read_size;
-  }else{
-    return buff;
+struct archive_entry *get_next_entry(struct archive *archive) {
+  struct archive_entry *entry = NULL;
+  /**
+   * ARCHIVE_EOF | ARCHIVE_OK | ARCHIVE_WARN | ARCHIVE_RETRY | ARCHIVE_FATAL
+   * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read.c#L649-L670
+   */
+  int code = archive_read_next_header(archive, &entry);
+  if (code == ARCHIVE_RETRY) {
+    // ¯\_(ツ)_/¯
+    code = archive_read_next_header(archive, &entry);
+    if (code == ARCHIVE_RETRY) {
+      code = ARCHIVE_FATAL;
+      if (empty_str(archive_error_string(archive))) {
+        archive_set_error(archive, ARCHIVE_ERRNO_MISC,
+                          "Retry for archive_read_next_header failed");
+      }
+    }
   }
+
+  if (code == ARCHIVE_WARN) {
+    const char *error = archive_error_string(archive);
+    fprintf(stderr, "LibArchive.getNextEntry: %s",
+            error == NULL ? "Unknown warning" : error);
+    archive_clear_error(archive);
+  } else if (code == ARCHIVE_EOF) {
+    archive_clear_error(archive);
+    archive_entry_clear(entry);
+    return NULL;
+  } else if (code == ARCHIVE_FATAL) {
+    if (empty_str(archive_error_string(archive))) {
+      archive_set_error(archive, ARCHIVE_ERRNO_MISC,
+                        "archive_read_next_header failed");
+    }
+    archive_entry_clear(entry);
+    return NULL;
+  }
+
+  return entry;
 }
 
-EMSCRIPTEN_KEEPALIVE
-void archive_close(void *archive) {
-  int r = archive_read_free(archive);
-  if (r != ARCHIVE_OK){
-    fprintf(stderr, "Error read free %d\n",r);
-    fprintf(stderr, "%s\n",archive_error_string(archive));
+void *get_filedata(struct archive *archive, size_t buffsize) {
+  if (buffsize > SIZE_MAX) {
+    archive_set_error(archive, ENOMEM,
+                      "Required buffer size is larger than SIZE_MAX");
+    return NULL;
   }
+
+  void *buff = malloc(buffsize);
+  if (buff == NULL) {
+    archive_set_error(archive, ENOMEM, "Failed to allocate filedata buffer");
+    return NULL;
+  }
+
+  /**
+   * ARCHIVE_RETRY | ARCHIVE_FATAL | number of bytes read (>=0)
+   * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read.c#L649-L670
+   */
+  int read_size = archive_read_data(archive, buff, buffsize);
+  if (read_size < 0) {
+    if (read_size == ARCHIVE_RETRY) {
+      // ¯\_(ツ)_/¯
+      read_size = archive_read_data(archive, buff, buffsize);
+      if (read_size == ARCHIVE_RETRY) {
+        read_size = ARCHIVE_FATAL;
+        if (empty_str(archive_error_string(archive))) {
+          archive_set_error(archive, ARCHIVE_ERRNO_MISC,
+                            "Retry for archive_read_data failed");
+        }
+        free(buff);
+        return NULL;
+      }
+    }
+
+    if (read_size < 0) {
+      if (empty_str(archive_error_string(archive))) {
+        archive_set_error(archive, ARCHIVE_ERRNO_MISC,
+                          "archive_read_next_header failed");
+      }
+      free(buff);
+      return NULL;
+    }
+  }
+
+  // HACK: Allow us to get the size from JS
+  archive_set_error(archive, ERANGE, "%d", read_size);
+
+  return buff;
 }

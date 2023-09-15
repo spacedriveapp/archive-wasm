@@ -1,6 +1,6 @@
 /*!
- * archive-wasm - LibArchive compiled to WASM with a small bidge api for NodeJS
- * Copyright (C) 2023  Vítor Vasconcellos
+ * archive-wasm - LibArchive compiled to WASM with a idiomatic JS API
+ * Copyright (C) 2023 Spacedrive Technology Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
