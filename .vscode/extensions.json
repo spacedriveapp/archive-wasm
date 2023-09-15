@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "foxundermoon.shell-format",
+    "EditorConfig.EditorConfig",
+    "llvm-vs-code-extensions.vscode-clangd"
+  ]
+}

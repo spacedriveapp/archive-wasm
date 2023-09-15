@@ -1,0 +1,12 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts, ${capture}.d.mts",
+    ".npmrc": ".nvmrc, .yarnrc.yml",
+    ".gitignore": ".eslintignore, .prettierignore",
+    "README.md": "CONTRIBUTING.md, CODE_OF_CONDUCT.md",
+    "LICENSE.md": "PREAMBLE",
+    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, pnpm-workspace.yaml, .pnp.cjs, .pnp.loader.mjs, .eslintcache",
+    "tsconfig.json": "tsconfig.*.json"
+  }
+}
