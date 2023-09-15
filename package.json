@@ -13,7 +13,7 @@
     "test": "ava",
     "wasm": "./docker/wasm.sh",
     "build": "tsc && npm run wasm",
-    "format": "eslint . --ext .js,.jsx,.mjs --rule 'prettier/prettier: off' --max-warnings 0 --fix --cache && prettier --write --log-level=warn '**/*.{js,mjs,json}'",
+    "format": "eslint . --ext .js,.mjs --rule 'prettier/prettier: off' --max-warnings 0 --fix --cache && prettier --write --log-level=warn '**/*.{js,mjs,json}'",
     "editorconfig": "curl -sSLOJ 'https://raw.githubusercontent.com/jokeyrhyme/standard-editorconfig/main/.editorconfig'"
   },
   "ava": {

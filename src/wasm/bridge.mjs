@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// @ts-ignore
+// @ts-expect-error
 // eslint-disable-next-line import/no-unresolved
 import archiveWasm from './libarchive.mjs'
 
@@ -165,8 +165,8 @@ export class Pointer {
    *    When grow is false, this method throws when trying to fill a NULL pointer,
    *    otherwise it will realloc the Pointer so it can fit the given data
    *
-   * @param {bigint | number | string | ArrayLike.<number> | ArrayBufferLike} data Data to copy to memory
-   * @param {boolean} [grow=false] - Wheter to alloc more data to make sure data fits inside {@link Pointer}
+   * @param {bigint | number | string | ArrayLike.<number> | ArrayBufferLike} data to copy to memory
+   * @param {boolean} [grow=false] Wheter to alloc more data to make sure data fits inside {@link Pointer}
    * @returns {Pointer}
    */
   fill(data, grow = false) {
@@ -206,7 +206,7 @@ export class Pointer {
   /**
    * Copy data from WASM memory and return it
    *
-   * @param {number} [size] - How much to read from memory
+   * @param {number} [size] How much to read from memory
    * @returns {ArrayBufferLike} Memory view
    */
   read(size) {
@@ -374,7 +374,7 @@ const _openArchive = /** @type {OpenArchiveCb} */ (
  * Open a compressed archive in memory
  *
  * @param {Pointer} buffer Buffer
- * @param {string} [passphrase] - Password to decrypt archive data
+ * @param {string} [passphrase] to decrypt archive data
  * @returns {number} Pointer to struct representing the opened archive
  */
 export function openArchive(buffer, passphrase) {
