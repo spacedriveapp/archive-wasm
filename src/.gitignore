@@ -1,0 +1,4 @@
+*.d.mts
+libarchive.mjs
+libarchive.wasm
+!wasm/libarchive.d.mts

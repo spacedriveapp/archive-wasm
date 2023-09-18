@@ -1,13 +1,17 @@
 {
   "name": "archive-wasm",
-  "main": "dist/archive.mjs",
+  "main": "src/archive.mjs",
   "type": "module",
+  "bugs": {
+    "url": "https://github.com/spacedriveapp/archive-wasm/issues"
+  },
   "author": "Vítor Vasconcellos",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18"
   },
+  "homepage": "https://github.com/spacedriveapp/archive-wasm#readme",
   "keywords": [
     "wasm",
     "tar",
@@ -19,16 +23,25 @@
     "archive",
     "libarchive"
   ],
+  "repository": "github:spacedriveapp/archive-wasm",
   "description": "LibArchive compiled to WASM with a idiomatic JS api",
   "scripts": {
-    "test": "ava",
-    "wasm": "./docker/wasm.sh",
-    "build": "tsc && npm run wasm",
-    "format": "eslint . --ext .js,.mjs --rule 'prettier/prettier: off' --max-warnings 0 --fix --cache && prettier --write --log-level=warn '**/*.{js,mjs,json}'",
+    "test": "test/test.sh",
+    "prelint": "eslint ./src --ext .js,.mjs --cache",
+    "lint": "tsc --noEmit",
+    "preformat": "eslint . --ext .js,.mjs --cache --rule 'prettier/prettier: off' --max-warnings 0 --fix",
+    "format": "prettier --write --log-level=warn '**/*.{js,mjs,json}'",
+    "clean": "git clean -qfX ./src",
+    "prebuild": "npm run clean",
+    "build": "npm run build:js",
+    "prebuild:js": "npm run prelint",
+    "build:js": "tsc",
+    "postbuild:js": "npm run build:wasm",
+    "build:wasm": "./wasm/build.sh",
     "editorconfig": "curl -sSLOJ 'https://raw.githubusercontent.com/jokeyrhyme/standard-editorconfig/main/.editorconfig'"
   },
   "ava": {
-    "timeout": "2m",
+    "timeout": "2s",
     "files": [
       "test/**/*"
     ],
@@ -116,7 +129,21 @@
     "parserOptions": {
       "sourceType": "module",
       "requireConfigFile": false
-    }
+    },
+    "ignorePatterns": [
+      "src/wasm/libarchive.mjs"
+    ]
+  },
+  "clean-package": {
+    "indent": 2,
+    "remove": [
+      "ava",
+      "scripts",
+      "prettier",
+      "eslintConfig",
+      "clean-package",
+      "devDependencies"
+    ]
   },
   "devDependencies": {
     "@babel/core": "^7.22.19",
@@ -125,6 +152,7 @@
     "@babel/preset-env": "^7.22.15",
     "@types/node": "^20.6.0",
     "ava": "^5.3.1",
+    "clean-package": "^2.2.0",
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-config-standard": "^17.1.0",

@@ -289,5 +289,4 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/Node,Windows,Linux,macOS,VisualStudioCode,C
 
-*.wasm
-src/wasm/libarchive.mjs
+package.json.backup

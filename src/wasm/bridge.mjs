@@ -16,258 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// @ts-expect-error
-// eslint-disable-next-line import/no-unresolved
-import archiveWasm from './libarchive.mjs'
-
-export const NULL = 0
-
-// Must be kept in sync with the definition in ../../docker/wrapper.c
-const EPASS = -37455
-
-/**
- * @callback CWrap
- * @param {string} functionName
- * @param {string?} returnType
- * @param {Array.<string>=} argTypes
- * @returns {Function} Wrapper
- */
-
-/**
- * @typedef {Object} ArchiveWASM
- * @property {CWrap} cwrap Wrap WASM function in a JS function
- * @property {Int8Array} HEAP8 8bit signed integer view of WASM memory
- */
-const archive = /** @type {ArchiveWASM} */ (
-  await archiveWasm({
-    print: console.log,
-    printErr: console.error,
-    noInitialRun: true,
-    noExitRuntime: true,
-  })
-)
-
-/**
- * Error codes: Use archive_errno() and archive_error_string()
- * to retrieve details.  Unless specified otherwise, all functions
- * that return 'int' use these codes.
- *
- * ARCHIVE_EOF    1	    // Found end of archive.
- * ARCHIVE_OK	    0	    // Operation was successful.
- * ARCHIVE_RETRY	(-10)	// Retry might succeed.
- * ARCHIVE_WARN	  (-20)	// Partial success.
- * // For example, if write_header "fails", then you can't push data.
- * ARCHIVE_FAILED	(-25)	// Current operation cannot complete.
- * // But if write_header is "fatal," then this archive is dead and useless.
- * ARCHIVE_FATAL	(-30)	// No more operations are possible.
- *
- * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive.h#L188C1-L200}
- *
- * @readonly
- * @enum {number}
- */
-const ReturnCode = {
-  OK: 0,
-  EOF: 1,
-  RETRY: -10,
-  WARN: -20,
-  FAILED: -25,
-  FATAL: -30,
-}
-
-export class ArchiveError extends Error {
-  /**
-   * Main error class
-   *
-   * @param {number} code Error code
-   * @param {string} message Error message
-   */
-  constructor(code, message) {
-    super(message)
-    this.code = code
-    this.name = this.constructor.name
-  }
-}
-
-export class NullError extends ArchiveError {}
-export class RetryError extends ArchiveError {}
-export class FatalError extends ArchiveError {}
-export class FailedError extends ArchiveError {}
-export class PasswordError extends ArchiveError {}
-
-/**
- * void * malloc(size_t size);
- *
- * @callback MallocCB
- * @param {number} size Memory size to be allocated
- * @returns {number} Pointer to allocated memory
- */
-const malloc = /** @type {MallocCB} */ (archive.cwrap('malloc', 'number', ['number']))
-
-/**
- * void free(void *ptr);
- *
- * @callback FreeCB
- * @param {number} pointer Pointer to memory to be freed
- */
-const free = /** @type {FreeCB} */ (archive.cwrap('free', null, ['number']))
-
-/**
- * Registry to automatically free any unreferenced {@link Pointer}
- * @type {FinalizationRegistry<number>}
- */
-const MemoryRegistry = new FinalizationRegistry(pointer => {
-  free(pointer)
-})
-
-export class Pointer {
-  /** @type {number} */
-  #size
-
-  /** @type {number} */
-  #pointer
-
-  /**
-   * High level representation of a WASM memory pointer
-   *
-   * @param {number} [size]
-   * @param {number} [pointer]
-   */
-  constructor(size, pointer) {
-    if (typeof size === 'number' && size < 0) throw new Error('Size must be >= 0')
-
-    this.#size = size ?? 0
-
-    if (pointer === undefined && this.#size > 0) {
-      this.#pointer = malloc(this.#size)
-      if (this.#pointer === NULL) throw new Error('Failed to allocate memory')
-    } else {
-      this.#pointer = pointer ?? NULL
-      if (this.#pointer !== NULL && this.#size === 0)
-        throw new Error('Size for an already allocated pointer must be >= 0')
-    }
-
-    if (this.#pointer !== NULL) MemoryRegistry.register(this, this.#pointer, this)
-  }
-
-  get size() {
-    return this.#size
-  }
-
-  get pointer() {
-    return this.#pointer
-  }
-
-  /**
-   * Fill memory with data
-   *
-   * .. note::
-   *    When grow is false, this method throws when trying to fill a NULL pointer,
-   *    otherwise it will realloc the Pointer so it can fit the given data
-   *
-   * @param {bigint | number | string | ArrayLike.<number> | ArrayBufferLike} data to copy to memory
-   * @param {boolean} [grow=false] Wheter to alloc more data to make sure data fits inside {@link Pointer}
-   * @returns {Pointer}
-   */
-  fill(data, grow = false) {
-    /** @type {Uint8Array} */
-    let array
-    switch (typeof data) {
-      case 'string':
-        array = new TextEncoder().encode(data)
-        break
-      case 'number':
-        array = new Uint8Array([data])
-        break
-      case 'bigint':
-        array = new Uint8Array(new BigInt64Array([data]))
-        break
-      default:
-        if (!(data instanceof Uint8Array)) {
-          array = new Uint8Array(data)
-        } else {
-          array = data
-        }
-    }
-
-    if (grow) {
-      this.realloc(array.byteLength, true)
-    } else if (array.byteLength > this.#size) {
-      array = array.subarray(0, this.#size)
-    }
-
-    if (this.#pointer === NULL) throw new Error('Filling invalid pointer')
-
-    archive.HEAP8.set(array, this.#pointer)
-
-    return this
-  }
-
-  /**
-   * Copy data from WASM memory and return it
-   *
-   * @param {number} [size] How much to read from memory
-   * @returns {ArrayBufferLike} Memory view
-   */
-  read(size) {
-    if (size == null) {
-      size = this.#size
-    } else if (size > this.#size) {
-      throw new Error('Attempting to read past the pointer allocated memory')
-    } else if (size < 0) {
-      throw new Error('Size must be a positive number')
-    }
-
-    if (this.#pointer === NULL) throw new Error('Reading invalid pointer')
-
-    return archive.HEAP8.slice(this.#pointer, this.#pointer + size).buffer
-  }
-
-  /**
-   * Free internal pointer
-   */
-  free() {
-    free(this.#pointer)
-    MemoryRegistry.unregister(this)
-    this.#pointer = NULL
-  }
-
-  /**
-   * Change pointer size
-   *
-   * @param {number} size New pointer size, 0 frees the pointer
-   * @returns {Pointer}
-   */
-  realloc(size, avoidShrinking = false) {
-    if (size < 0) throw new Error('Size must be >= 0')
-    if (size === this.#size || (avoidShrinking && size < this.#size)) return this
-
-    /** @type {number} */
-    let pointer
-    if (size > 0) {
-      pointer = malloc(size)
-      if (pointer === NULL) throw new Error('Failed to allocate memory')
-
-      if (this.#pointer !== NULL) {
-        archive.HEAP8.copyWithin(
-          pointer,
-          this.#pointer,
-          this.#pointer + Math.min(size, this.#size)
-        )
-        this.free()
-      }
-
-      this.#pointer = pointer
-      MemoryRegistry.register(this, this.#pointer, this)
-    } else {
-      this.free()
-    }
-
-    this.#size = size
-
-    return this
-  }
-}
+import { ReturnCode } from './enums.mjs'
+import {
+  EPASS,
+  ENULL,
+  ARCHIVE_ERRNO_MISC,
+  RetryError,
+  FatalError,
+  PassphraseError,
+  FailedError,
+  ArchiveError,
+  FileReadError,
+  NullError,
+} from './errors.mjs'
+import lib from './module.mjs'
+import { Pointer } from './pointer.mjs'
 
 /**
  * Open a compressed archive in memory
@@ -276,9 +39,7 @@ export class Pointer {
  * @callback clearErrorCb
  * @param {number} archive Pointer to archive struct
  */
-const clearError = /** @type {clearErrorCb} */ (
-  archive.cwrap('archive_clear_error', null, ['number'])
-)
+const clearError = /** @type {clearErrorCb} */ (lib.cwrap('archive_clear_error', null, ['number']))
 
 /**
  * Get the message content of the last error that occured
@@ -289,7 +50,7 @@ const clearError = /** @type {clearErrorCb} */ (
  * @returns {string} Last error message that occurred, empty string if no error has occurred yet
  */
 const getError = /** @type {GetErrorCb} */ (
-  archive.cwrap('archive_error_string', 'string', ['number'])
+  lib.cwrap('archive_error_string', 'string', ['number'])
 )
 
 /**
@@ -301,55 +62,61 @@ const getError = /** @type {GetErrorCb} */ (
  * @returns {number} Last error code that occurred, zero if no error has occurred yet
  */
 const getErrorCode = /** @type {getErrorCodeCb} */ (
-  archive.cwrap('archive_errno', 'number', ['number'])
+  lib.cwrap('archive_errno', 'number', ['number'])
 )
 
 /**
  * Wrap calls that interact with archive to do erro checking/clean-up
  * @param {Function} cb Native call
  * @param {null | boolean} checkReturn Wheter the return of the call is a {@link ReturnCode} to be checked and consumed,
- *                                       null is a special case for functions taht return a pointer and need to validate that it isn't NULL
+ *                                       null is a special case for functions taht return a pointer and need to validate that it isn't Pointer.NULL
  * @returns {Function}
  */
 function errorCheck(cb, checkReturn) {
   /**
-   * @param {number} archive = Pointer to archive struct
-   * @param {Array.<any>} args Other arguments
+   * @param {Pointer} archive = Pointer to archive struct
+   * @param {any[]} args Other arguments
    * @returns {unknown}
    */
   function errorCheckWrapper(archive, ...args) {
-    const returnCode = cb(archive, ...args)
+    if (archive.isNull()) throw new NullError('Archive pointer is Pointer.NULL')
 
-    const errorMsg = getError(archive) ?? 'Unknown'
-    const errorCode = getErrorCode(archive)
+    const returnCode = cb(archive.raw, ...args)
+    if (archive.isNull()) return returnCode
+
+    const errorMsg = getError(archive.raw) ?? 'Unknown error'
+    const errorCode = getErrorCode(archive.raw)
     try {
       if (checkReturn) {
         switch (returnCode) {
-          case ReturnCode.OK:
-            return true
-          case ReturnCode.EOF:
-            return false
           case ReturnCode.WARN:
-            console.warn(`LibArchive.${cb.name}: ${errorMsg}`)
-            return false
+            console.warn(`${cb.name}: ${errorMsg}`)
+          // eslint-disable-next-line no-fallthrough
+          case ReturnCode.OK:
+          case ReturnCode.EOF:
+            return
           case ReturnCode.RETRY:
-            throw new RetryError(errorCode, `${cb.name}: ${errorMsg}`)
+            throw new RetryError(errorCode, errorMsg)
           case ReturnCode.FATAL:
-            throw new FatalError(errorCode, `${cb.name}: ${errorMsg}`)
+            throw new FatalError(errorCode, errorMsg)
           case ReturnCode.FAILED:
-            throw new FailedError(errorCode, `${cb.name}: ${errorMsg}`)
+            throw new FailedError(errorCode, errorMsg)
           default:
-            throw new Error(`LibArchive.${cb.name}: Invalid return code`)
+            throw new Error('Invalid return code')
         }
       } else {
-        const errorMsg = getError(archive)
         if (errorCode !== 0) throw new ArchiveError(errorCode, errorMsg)
-        if (checkReturn === null && (returnCode === NULL || returnCode === ''))
-          throw new NullError(-1, `LibArchive.${cb.name}: returned NULL`)
+        if (checkReturn === null) {
+          if (returnCode === Pointer.NULL || returnCode === '') {
+            throw new NullError('Returned unexpected Pointer.NULL')
+          } else if (typeof returnCode === 'number') {
+            return new Pointer(0, returnCode)
+          }
+        }
         return returnCode
       }
     } finally {
-      clearError(archive)
+      clearError(archive.raw)
     }
   }
 
@@ -357,8 +124,7 @@ function errorCheck(cb, checkReturn) {
 }
 
 /**
- * Open a compressed archive in memory
- * struct archive *archive_open(const void *buf, size_t size, const char *passphrase);
+ * struct archive *open_archive(const void *buf, size_t size, const char *passphrase);
  *
  * @callback OpenArchiveCb
  * @param {number} buf Pointer to archive data buffer
@@ -367,30 +133,33 @@ function errorCheck(cb, checkReturn) {
  * @returns {number} Pointer to struct representing the opened archive
  */
 const _openArchive = /** @type {OpenArchiveCb} */ (
-  archive.cwrap('archive_open', 'number', ['number', 'number', 'string'])
+  lib.cwrap('open_archive', 'number', ['number', 'number', 'string'])
 )
 
 /**
  * Open a compressed archive in memory
  *
- * @param {Pointer} buffer Buffer
+ * @param {Pointer} buffer Archive data
  * @param {string} [passphrase] to decrypt archive data
- * @returns {number} Pointer to struct representing the opened archive
+ * @returns {Pointer} Pointer to struct representing the opened archive
  */
 export function openArchive(buffer, passphrase) {
-  if (buffer.pointer === NULL) throw new Error('Invalid buffer')
+  if (buffer.size == null || buffer.isNull())
+    throw new NullError("Archive data must be a malloc'd buffer, not NULL or externally managed")
 
   if (passphrase == null) passphrase = ''
 
-  const archive = _openArchive(buffer.pointer, buffer.size, passphrase)
-  if (archive === NULL) throw new Error('Failed to allocate archive')
+  const archive = new Pointer(0, _openArchive(buffer.raw, buffer.size, passphrase))
+  if (archive.isNull()) throw new NullError('Failed to allocate memory')
 
-  const errorCode = getErrorCode(archive)
+  const errorCode = getErrorCode(archive.raw)
   if (errorCode !== 0) {
-    clearError(archive)
+    const errorMsg = getError(archive.raw)
+
+    clearError(archive.raw)
     closeArchive(archive)
-    const Err = errorCode === EPASS ? PasswordError : ArchiveError
-    throw new Err(errorCode, getError(archive))
+
+    throw new (errorCode === EPASS ? PassphraseError : ArchiveError)(errorCode, errorMsg)
   }
 
   return archive
@@ -401,15 +170,14 @@ export function openArchive(buffer, passphrase) {
  * struct archive_entry *get_next_entry(struct archive *archive);
  *
  * @callback GetNextEntryCb
- * @param {number} archive Pointer to archive struct
- * @returns {number} Pointer to struct representing an archive entry
+ * @param {Pointer} archive Pointer to archive struct
+ * @returns {Pointer} Pointer to struct representing an archive entry
  */
 export const getNextEntry = /** @type {GetNextEntryCb} */ (
-  errorCheck(archive.cwrap('get_next_entry', 'number', ['number']), false)
+  errorCheck(lib.cwrap('get_next_entry', 'number', ['number']), null)
 )
 
 /**
- * Get the file data for the current entry of an archive
  * void * get_filedata(void * archive, size_t buffsize);
  *
  * @callback GetFileDataCb
@@ -418,69 +186,99 @@ export const getNextEntry = /** @type {GetNextEntryCb} */ (
  * @returns {number} Pointer to file data buffer
  */
 const _getFileData = /** @type {GetFileDataCb} */ (
-  archive.cwrap('get_filedata', 'number', ['number', 'number'])
+  lib.cwrap('get_filedata', 'number', ['number', 'number'])
 )
 
 /**
  * Get the file data for the current entry of an archive
  *
- * @param {number} archive Pointer to archive struct
- * @param {number} buffsize File size to be read, must be a value returned by {@link GetEntrySizeCb}
- * @returns {Pointer} Pointer to file data in WASM HEAP
+ * @param {Pointer} archive Pointer to archive struct
+ * @param {bigint} buffsize File size to be read, must be a value returned by {@link GetEntrySizeCb}
+ * @returns {ArrayBufferLike} Pointer to file data in WASM HEAP
  */
 export function getFileData(archive, buffsize) {
-  const fileDataPointer = _getFileData(archive, buffsize)
+  if (archive.isNull()) throw new NullError('Archive pointer is Pointer.NULL')
 
-  let readLen = NaN
-  let errorMsg = getError(archive)
+  if (buffsize === 0n) return new ArrayBuffer(0)
 
-  try {
-    if (fileDataPointer === NULL) {
-      if (errorMsg === '') errorMsg = 'Failed to allocate archive'
-      throw new Error(errorMsg)
-    }
-
-    readLen = Number.parseInt(errorMsg)
-    if (Number.isNaN(readLen) || readLen < 0) {
-      free(fileDataPointer)
-      throw new Error('Invalid file read')
-    }
-  } finally {
-    clearError(archive)
+  const size = Number(buffsize)
+  if (size > Number.MAX_SAFE_INTEGER) {
+    throw new FileReadError(
+      ARCHIVE_ERRNO_MISC,
+      `Couldn't read entry data due to it's size exceeding MAX_SAFE_INTEGER: ${buffsize}`
+    )
   }
 
-  const pointer = new Pointer(buffsize, fileDataPointer)
-  pointer.realloc(readLen)
+  const fileDataPointer = new Pointer(size, _getFileData(archive.raw, size))
+  try {
+    let readLen, errorMsg, errorCode
+    if (archive.isNull()) {
+      errorMsg = 'Archive pointer is Pointer.NULL'
+      errorCode = ENULL
+    } else {
+      errorMsg = getError(archive.raw)
+      errorCode = getErrorCode(archive.raw)
+    }
 
-  return pointer
+    try {
+      if (errorCode !== 0) {
+        throw errorCode === ARCHIVE_ERRNO_MISC &&
+          errorMsg.toLocaleLowerCase().includes('passphrase')
+          ? new PassphraseError(EPASS, errorMsg)
+          : new FileReadError(errorCode, errorMsg || 'Failed to read archive data')
+      }
+
+      if (fileDataPointer.isNull())
+        throw new NullError('Failed to allocate memory for archive data')
+
+      readLen = Number.parseInt(errorMsg)
+      if (Number.isNaN(readLen) || readLen < 0) {
+        fileDataPointer.free()
+        throw new FileReadError(ARCHIVE_ERRNO_MISC, 'Invalid size for archive data')
+      }
+    } finally {
+      if (!archive.isNull()) clearError(archive.raw)
+    }
+
+    return fileDataPointer.realloc(readLen, true).read()
+  } finally {
+    fileDataPointer.free()
+  }
 }
 
 /**
- * Free an open archive from memory
  * int archive_read_free(struct archive * archive);
  *
- * .. note::
- *    The native call returns {@link ReturnCode.OK} on success, or {@link ReturnCode.FATAL}, which is
- *    checked on every call and converted into a JS Error in case the return is not {@link ReturnCode.OK}
- *
  * @callback CloseArchiveCb
- * @param {number} archive Pointer to archive struct
- * @returns {boolean} Whether the call sucessed but had a warning
+ * @param {Pointer} archive Pointer to archive struct
  */
-export const closeArchive = /** @type {CloseArchiveCb} */ (
-  errorCheck(archive.cwrap('archive_read_free', 'number', ['number']), true)
+const _closeArchive = /** @type {CloseArchiveCb} */ (
+  errorCheck(lib.cwrap('archive_read_free', 'number', ['number']), true)
 )
+
+/**
+ * Free archive pointer from memory
+ *
+ * @param {Pointer} archive
+ */
+export function closeArchive(archive) {
+  try {
+    _closeArchive(archive)
+  } finally {
+    archive.free()
+  }
+}
 
 /**
  * Get the size of the current entry of an archive
  * la_int64_t archive_entry_size(struct archive_entry *archive);
  *
  * @callback GetEntrySizeCb
- * @param {number} archive Pointer to archive struct
+ * @param {Pointer} archive Pointer to archive struct
  * @returns {bigint} Current entry size to be used in {@link GetFileDataCb}
  */
 export const getEntrySize = /** @type {GetEntrySizeCb} */ (
-  archive.cwrap('archive_entry_size', 'number', ['number'])
+  errorCheck(lib.cwrap('archive_entry_size', 'number', ['number']), false)
 )
 
 /**
@@ -488,66 +286,65 @@ export const getEntrySize = /** @type {GetEntrySizeCb} */ (
  * const char * archive_entry_pathname_utf8(struct archive_entry *entry)
  *
  * @callback GetEntryNameCb
- * @param {number} archive Pointer to archive struct
+ * @param {Pointer} archive Pointer to archive struct
  * @returns {string} Current entry name
  */
 export const getEntryPathName = /** @type {GetEntryNameCb} */ (
-  errorCheck(archive.cwrap('archive_entry_pathname_utf8', 'string', ['number']), null)
+  errorCheck(lib.cwrap('archive_entry_pathname_utf8', 'string', ['number']), null)
 )
 
 /**
- * File-type constants
- * These are returned from archive_entry_filetype() and passed to archive_entry_set_filetype()
- *
- * AE_IFREG	 0100000
- * AE_IFLNK	 0120000
- * AE_IFSOCK 0140000
- * AE_IFCHR	 0020000
- * AE_IFBLK	 0060000
- * AE_IFDIR	 0040000
- * AE_IFIFO	 0010000
- *
- * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_entry.h#L186-L193}
- *
- * @readonly
- * @enum {number}
- */
-export const EntryType = {
-  FILE: 0o0100000,
-  SYMBOLIC_LINK: 0o0120000,
-  SOCKET: 0o0140000,
-  CHARACTER_DEVICE: 0o0020000,
-  BLOCK_DEVICE: 0o0060000,
-  DIR: 0o0040000,
-  NAMED_PIPE: 0o0010000,
-}
-
-/**
- * Get the type of the current entry of an archive
+ * Get the st_mode of the current entry of an archive
  * mode_t archive_entry_filetype(struct archive_entry *archive);
  *
- * @callback GetEntryTypeCb
- * @param {number} archive Pointer to archive struct
- * @returns {EntryType} Current entry type
+ * @callback GetEntryModeCb
+ * @param {Pointer} archive Pointer to archive struct
+ * @returns {number} Current entry's st_mode
  */
-export const getEntryType = /** @type {GetEntryTypeCb} */ (
-  archive.cwrap('archive_entry_filetype', 'number', ['number'])
+export const getEntryMode = /** @type {GetEntryModeCb} */ (
+  errorCheck(lib.cwrap('archive_entry_mode', 'number', ['number']), false)
 )
 
 /**
- * Codes returned by archive_read_has_encrypted_entries().
+ * long archive_entry_atime(struct archive_entry *archive)
  *
- * ARCHIVE_READ_FORMAT_ENCRYPTION_UNSUPPORTED -2
- * ARCHIVE_READ_FORMAT_ENCRYPTION_DONT_KNOW -1
- *
- * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive.h#L362-L372}
- *
- * @readonly
- * @enum {number}
+ * @callback GetEntryAtimeCb
+ * @param {Pointer} archive Pointer to archive struct
+ * @returns {bigint} Current entry atime
  */
-export const Encryption = {
-  UNSUPPORTED: -2,
-  UNKNOW: -1,
-  ENCRYPTED: 1,
-  PLAIN: 0,
-}
+export const getEntryAtime = /** @type {GetEntryAtimeCb} */ (
+  errorCheck(lib.cwrap('archive_entry_atime', 'number', ['number']), false)
+)
+
+/**
+ * long archive_entry_ctime(struct archive_entry *archive)
+ *
+ * @callback GetEntryCtimeCb
+ * @param {Pointer} archive Pointer to archive struct
+ * @returns {bigint} Current entry ctime
+ */
+export const getEntryCtime = /** @type {GetEntryCtimeCb} */ (
+  errorCheck(lib.cwrap('archive_entry_ctime', 'number', ['number']), false)
+)
+
+/**
+ * long archive_entry_mtime(struct archive_entry *archive)
+ *
+ * @callback GetEntryMtimeCb
+ * @param {Pointer} archive Pointer to archive struct
+ * @returns {bigint} Current entry mtime
+ */
+export const getEntryMtime = /** @type {GetEntryMtimeCb} */ (
+  errorCheck(lib.cwrap('archive_entry_mtime', 'number', ['number']), false)
+)
+
+/**
+ * long archive_entry_birthtime(struct archive_entry *archive)
+ *
+ * @callback GetEntryBirthtimeCb
+ * @param {Pointer} archive Pointer to archive struct
+ * @returns {bigint} Current entry birthtime
+ */
+export const getEntryBirthtime = /** @type {GetEntryBirthtimeCb} */ (
+  errorCheck(lib.cwrap('archive_entry_birthtime', 'number', ['number']), false)
+)

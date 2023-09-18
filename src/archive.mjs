@@ -17,73 +17,185 @@
  */
 
 import {
-  Pointer,
   openArchive,
-  getFileData,
   closeArchive,
   getNextEntry,
+  getFileData,
+  getEntryAtime,
+  getEntryBirthtime,
+  getEntryCtime,
+  getEntryMode,
+  getEntryMtime,
   getEntryPathName,
   getEntrySize,
-  getEntryType,
-  NULL,
 } from './wasm/bridge.mjs'
+import { FILETYPE_FLAG, EntryType } from './wasm/enums.mjs'
+import { ENULL, FileReadError, NullError } from './wasm/errors.mjs'
+import { Pointer } from './wasm/pointer.mjs'
 
 /**
- * Registry to automatically close archive when all of its entries get garbage collected
- * @type {FinalizationRegistry<number>}
+ * A compressed data entry inside an archive
+ * @typedef {Object} Entry
+ * @property {bigint} size Size of the entry in bytes.
+ * @property {number} mode A bit-field describing the file type and mode.
+ * @property {string} path Path of the entry within the archive.
+ * @property {ArrayBuffer} data Extracted data content of entry.
+ * @property {bigint} atime The timestamp indicating the last time this file was accessed expressed in nanoseconds since the POSIX Epoch.
+ * @property {bigint} ctime The timestamp indicating the last time the file status was changed expressed in nanoseconds since the POSIX Epoch.
+ * @property {bigint} mtime The timestamp indicating the last time this file was modified expressed in nanoseconds since the POSIX Epoch.
+ * @property {bigint} birthtime The timestamp indicating the creation time of this file expressed in nanoseconds since the POSIX Epoch.
  */
-const ArchiveRegistry = new FinalizationRegistry(archive => {
-  closeArchive(archive)
-})
+
+/** @type {boolean} */
+let WARNING = true
+
+/** Disable lib warnings */
+export function disableWarning() {
+  WARNING = false
+}
 
 /**
  * Uncompress archive, iterate through all it's entries
  *
- * Supports the following formats:
- * LZ4, LZO, LZMA, ZSTD, ZLIB, BZip2
- *
- * @param {ArrayBufferLike} data - Archive data
- * @param {string} [passphrase] - Archive passphrase
+ * @param {ArrayBufferLike} data The archive data
+ * @param {string} [passphrase] Passphrase to decrypt protect zip archives
  * @yields {Entry}
  */
 export function* extract(data, passphrase) {
-  const marker = Object.create(null)
+  let offset = 0
   const buffer = new Pointer().fill(data, true)
   const archive = openArchive(buffer, passphrase)
 
-  /**
-   * Associate the marker object with the archive pointer,
-   * which will in turn be present in all the entries object,
-   * so that when all of them get garbage collected,
-   * the marker will too and then trigger the closing of the archive pointer
-   */
-  ArchiveRegistry.register(marker, archive)
+  try {
+    while (true) {
+      let pointer
 
-  let entryPointer
-  while ((entryPointer = getNextEntry(archive)) !== NULL) {
-    const path = getEntryPathName(entryPointer)
-    const sizen = getEntrySize(entryPointer)
+      try {
+        pointer = getNextEntry(archive)
+      } catch (error) {
+        // Null here means archive EOF
+        if (error instanceof NullError) return
 
-    const size = Number(sizen)
-    if (size > Number.MAX_SAFE_INTEGER) {
-      throw new Error(`Entry ${path} size exceeds MAX_SAFE_INTEGER: ${sizen}`)
+        throw error
+      }
+
+      // Cache the current archive so it can be modified by the getter
+      let $archive = archive
+
+      /** @type {Entry} */
+      const entry = {
+        size: getEntrySize(pointer),
+        mode: getEntryMode(pointer),
+        path: getEntryPathName(pointer),
+        atime: getEntryAtime(pointer),
+        ctime: getEntryCtime(pointer),
+        mtime: getEntryMtime(pointer),
+        birthtime: getEntryBirthtime(pointer),
+
+        get data() {
+          const data = getFileData($archive, entry.size)
+
+          // Replace the getter with the actual value now that we got it
+          Object.defineProperty(entry, 'data', {
+            value: data,
+          })
+          return data
+        },
+      }
+
+      yield entry
+
+      // If getter still exists that means the entry's data was not accessed.
+      const entryDataGetter = Object.getOwnPropertyDescriptor(entry, 'data')?.get
+      if (typeof entryDataGetter === 'function') {
+        let skips = offset + 1
+
+        // Replace the getter with one that opens a new archive to work-around the streaming nature of LibArchive
+        Object.defineProperty(entry, 'data', {
+          get: () => {
+            if (WARNING)
+              console.warn("Accessing entry's data after the extract loop is not performatic")
+            $archive = openArchive(buffer, passphrase)
+            try {
+              while (--skips >= 0) {
+                try {
+                  getNextEntry($archive)
+                } catch (error) {
+                  throw error instanceof NullError
+                    ? new FileReadError(ENULL, `Couldn't find entry ${offset} inside archive`)
+                    : error
+                }
+              }
+
+              return entryDataGetter()
+            } finally {
+              closeArchive($archive)
+            }
+          },
+        })
+      }
+
+      offset++
     }
-
-    /** @type {ArrayBufferLike} */
-    let data
-    const entry = {
-      size,
-      path,
-      type: getEntryType(entryPointer),
-      get data() {
-        if (data == null) data = getFileData(archive, size).read()
-        return data
-      },
-      [Symbol('marker')]: marker,
-    }
-
-    yield entry
+  } finally {
+    closeArchive(archive)
   }
 }
 
-export { EntryType } from './wasm/bridge.mjs'
+/**
+ * Uncompress all entries in an archive
+ *
+ * @param {ArrayBufferLike} data The archive data
+ * @param {string} [passphrase] Passphrase to decrypt protect zip archives
+ * @return {Entry[]} List with all entries included in the archive
+ */
+export function extractAll(data, passphrase) {
+  return Array.from(extract(data, passphrase), e => {
+    void e.data
+    return e
+  })
+}
+
+/**
+ * Parse an entry's mode to retrieve it's type
+ *
+ * @param {Entry} entry
+ * @returns {'FILE' | 'NAMED_PIPE' | 'SOCKET' | 'DIR' | 'BLOCK_DEVICE' | 'SYMBOLIC_LINK' | 'CHARACTER_DEVICE'} type
+ */
+export function getEntryType(entry) {
+  switch (FILETYPE_FLAG & entry.mode) {
+    case EntryType.FILE:
+      return 'FILE'
+
+    case EntryType.NAMED_PIPE:
+      return 'NAMED_PIPE'
+
+    case EntryType.SOCKET:
+      return 'SOCKET'
+
+    case EntryType.DIR:
+      return 'DIR'
+
+    case EntryType.BLOCK_DEVICE:
+      return 'BLOCK_DEVICE'
+
+    case EntryType.SYMBOLIC_LINK:
+      return 'SYMBOLIC_LINK'
+
+    case EntryType.CHARACTER_DEVICE:
+      return 'CHARACTER_DEVICE'
+
+    default:
+      throw Error('Unknow entry type')
+  }
+}
+
+export {
+  ArchiveError,
+  NullError,
+  RetryError,
+  FatalError,
+  FailedError,
+  FileReadError,
+  PassphraseError,
+} from './wasm/errors.mjs'

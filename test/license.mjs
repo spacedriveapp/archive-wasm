@@ -22,28 +22,84 @@ import * as fs from 'node:fs'
 // eslint-disable-next-line import/no-unresolved
 import test from 'ava'
 
-import { extract, EntryType } from '../dist/archive.mjs'
+import {
+  extract,
+  extractAll,
+  disableWarning,
+  FileReadError,
+  PassphraseError,
+} from '../src/archive.mjs'
 
-test('license.tar.gz', async t => {
-  const tarFile = fs.readFileSync(new URL('./license.tar.gz', import.meta.url))
-  const licenseFile = fs.readFileSync(new URL('../LICENSE.md', import.meta.url))
-  const licenseFileStat = fs.statSync(new URL('../LICENSE.md', import.meta.url))
-  const preambleFile = fs.readFileSync(new URL('../PREAMBLE', import.meta.url))
-  const preambleFileStat = fs.statSync(new URL('../PREAMBLE', import.meta.url))
+disableWarning()
 
-  const entries = Array.from(extract(tarFile), entry => {
-    void entry.data
-    return entry
-  })
+const licenseFile = fs.readFileSync(new URL('../LICENSE.md', import.meta.url))
+const licenseFileStat = fs.statSync(new URL('../LICENSE.md', import.meta.url), { bigint: true })
+const preambleFile = fs.readFileSync(new URL('../PREAMBLE', import.meta.url))
+const preambleFileStat = fs.statSync(new URL('../PREAMBLE', import.meta.url), { bigint: true })
 
+const licenseCheck = (t, archivePath, passphrase, mode) => {
   const d = new TextDecoder()
+  const archiveFile = fs.readFileSync(new URL(archivePath, import.meta.url))
 
-  t.is(entries[0].path, 'LICENSE.md')
-  t.is(entries[0].size, licenseFileStat.size)
-  t.is(entries[0].type, EntryType.FILE)
-  t.deepEqual(d.decode(entries[0].data), d.decode(licenseFile))
-  t.is(entries[1].path, 'PREAMBLE')
-  t.is(entries[1].size, preambleFileStat.size)
-  t.is(entries[1].type, EntryType.FILE)
-  t.deepEqual(d.decode(entries[1].data), d.decode(preambleFile))
+  let entry
+  let entries = extract(archiveFile, passphrase)
+  if (mode) entries = Array.from(entries)
+
+  entry = mode ? entries[0] : entries.next().value
+  t.is(entry.path, 'LICENSE.md')
+  t.is(entry.size, licenseFileStat.size)
+  t.is(entry.mode, Number(licenseFileStat.mode))
+  t.is(d.decode(entry.data), d.decode(licenseFile))
+
+  entry = mode ? entries[1] : entries.next().value
+  t.is(entry.path, 'PREAMBLE')
+  t.is(entry.size, preambleFileStat.size)
+  t.is(entry.mode, Number(preambleFileStat.mode))
+  t.is(d.decode(entry.data), d.decode(preambleFile))
+}
+
+for (let archive of [
+  'license.7z',
+  'license.tgz',
+  'license.tlz',
+  'license.tzo',
+  'license.zip',
+  'license.tbz2',
+  'license.tar.zst',
+  'license.tar.lz4',
+  ['license.encrypted.zip', '12345678'],
+]) {
+  let passphrase
+  if (Array.isArray(archive)) [archive, passphrase] = archive
+  test(`Test ${archive} with out of loop access`, async t =>
+    licenseCheck(t, archive, passphrase, true))
+  test(`Test ${archive} with in loop access`, async t =>
+    licenseCheck(t, archive, passphrase, false))
+}
+
+test('Test 7z encrypted are not supported error', t => {
+  const archiveFile = fs.readFileSync(new URL('license.encrypted.7z', import.meta.url))
+  t.throws(() => extractAll(archiveFile, '12345678'), {
+    instanceOf: FileReadError,
+  })
+})
+
+test('Test open encrypted zip without passphrase error', t => {
+  const archiveFile = fs.readFileSync(new URL('license.encrypted.zip', import.meta.url))
+  t.throws(() => extractAll(archiveFile), {
+    instanceOf: PassphraseError,
+  })
+})
+
+test('Test accessing entries in-loop and outside should work', t => {
+  const archiveFile = fs.readFileSync(new URL('license.7z', import.meta.url))
+  const inLoop = extractAll(archiveFile)
+  const outsideLoop = Array.from(extract(archiveFile))
+
+  for (let i = 0; i < inLoop.length; ++i) {
+    t.is(inLoop[i].path, outsideLoop[i].path)
+    t.is(inLoop[i].size, outsideLoop[i].size)
+    t.is(inLoop[i].mode, outsideLoop[i].mode)
+    t.deepEqual(inLoop[i].data, outsideLoop[i].data)
+  }
 })

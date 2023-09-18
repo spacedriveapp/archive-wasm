@@ -2,7 +2,7 @@
 
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
-FROM emscripten/emsdk:3.1.45 as base
+FROM emscripten/emsdk:3.1.46 as base
 
 SHELL ["/bin/bash", "-euxc"]
 
@@ -249,7 +249,7 @@ COPY --from=libarchive $SYSROOT $SYSROOT
 ENV EMCC_CFLAGS='-DLIBARCHIVE_STATIC'
 RUN emcc -c ./wrapper.c -I "${SYSROOT}/include" $CFLAGS
 RUN mkdir wasm
-RUN echo "// @ts-nocheck" >pre.js
+RUN printf "\n// @ts-nocheck\n" >pre.js
 RUN emcc ./wrapper.o \
 	"${SYSROOT}/lib/libarchive.a" \
 	"${SYSROOT}/lib/liblz4.a" \

@@ -1,7 +1,8 @@
 {
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
-    "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts, ${capture}.d.mts",
+    "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
+    "*.mjs": "${capture}.mjs.map, ${capture}.min.mjs, ${capture}.d.mts",
     ".npmrc": ".nvmrc, .yarnrc.yml",
     ".gitignore": ".eslintignore, .prettierignore",
     "README.md": "CONTRIBUTING.md, CODE_OF_CONDUCT.md",

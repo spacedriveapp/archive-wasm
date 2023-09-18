@@ -15,7 +15,7 @@
 
 #define empty_str(str) (str == NULL || str[0] == '\0')
 
-struct archive *archive_open(const void *buf, size_t size,
+struct archive *open_archive(const void *buf, size_t size,
                              const char *passphrase) {
   // https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read.c#L88-L108
   struct archive *archive = archive_read_new();
@@ -163,7 +163,7 @@ void *get_filedata(struct archive *archive, size_t buffsize) {
   }
 
   // HACK: Allow us to get the size from JS
-  archive_set_error(archive, ERANGE, "%d", read_size);
+  archive_set_error(archive, 0, "%d", read_size);
 
   return buff;
 }

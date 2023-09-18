@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "lib": ["esnext"],
-    "outDir": "dist",
+    "outDir": "src",
     "strict": true,
     "checkJs": true,
     "allowJs": true,
@@ -10,7 +10,7 @@
     "declaration": true,
     "incremental": true,
     "skipLibCheck": true,
-    "removeComments": true,
+    "removeComments": false,
     "noUnusedLocals": true,
     "isolatedModules": true,
     "esModuleInterop": false,
@@ -19,6 +19,7 @@
     "noImplicitReturns": true,
     "resolveJsonModule": true,
     "noUnusedParameters": true,
+    "emitDeclarationOnly": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": true,
     "noUncheckedIndexedAccess": true,
