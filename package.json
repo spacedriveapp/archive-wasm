@@ -23,21 +23,29 @@
     "archive",
     "libarchive"
   ],
-  "repository": "github:spacedriveapp/archive-wasm",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spacedriveapp/archive-wasm.git"
+  },
   "description": "LibArchive compiled to WASM with a idiomatic JS api",
   "scripts": {
-    "test": "test/test.sh",
     "prelint": "eslint ./src --ext .js,.mjs --cache",
-    "lint": "tsc --noEmit",
+    "lint": "tsc --noEmit --emitDeclarationOnly false",
     "preformat": "eslint . --ext .js,.mjs --cache --rule 'prettier/prettier: off' --max-warnings 0 --fix",
     "format": "prettier --write --log-level=warn '**/*.{js,mjs,json}'",
     "clean": "git clean -qfX ./src",
-    "prebuild": "npm run clean",
-    "build": "npm run build:js",
+    "build:wasm": "./wasm/build.sh",
     "prebuild:js": "npm run prelint",
     "build:js": "tsc",
     "postbuild:js": "npm run build:wasm",
-    "build:wasm": "./wasm/build.sh",
+    "prebuild": "npm run clean",
+    "build": "npm run build:js",
+    "test": "test/test.sh",
+    "prebuildtest": "npm run build",
+    "buildtest": "npm run test",
+    "prepublishOnly": "npm run buildtest",
+    "prepack": "clean-package",
+    "postpack": "clean-package restore",
     "editorconfig": "curl -sSLOJ 'https://raw.githubusercontent.com/jokeyrhyme/standard-editorconfig/main/.editorconfig'"
   },
   "ava": {

@@ -1,7 +1,5 @@
 *
-!dist/
-!dist/**/*
-dist/tsconfig.tsbuildinfo
+!src/**/*
 !README.md
 !LICENSE.md
 !package.json
