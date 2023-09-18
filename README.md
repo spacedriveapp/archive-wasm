@@ -62,13 +62,15 @@ Extracts entries from an archive.
 Returns a generator that yields objects representing archive entries with the following properties:
 
 - `size`: Size of the entry in bytes.
-- `mode`: A bit-field describing the file type and mode.
+- `mode`¹: A bit-field describing the file type and mode.
 - `path`: Path of the entry within the archive.
 - `data`: An `ArrayBuffer` containing the entry's data.
-- `atime`: The timestamp indicating the last time this file was accessed expressed in nanoseconds since the POSIX Epoch.
-- `ctime`: The timestamp indicating the last time the file status was changed expressed in nanoseconds since the POSIX Epoch.
-- `mtime`: The timestamp indicating the last time this file was modified expressed in nanoseconds since the POSIX Epoch.
-- `birthtime`: The timestamp indicating the creation time of this file expressed in nanoseconds since the POSIX Epoch.
+- `atime`¹: The timestamp indicating the last time this file was accessed expressed in nanoseconds since the POSIX Epoch.
+- `ctime`¹: The timestamp indicating the last time the file status was changed expressed in nanoseconds since the POSIX Epoch.
+- `mtime`¹: The timestamp indicating the last time this file was modified expressed in nanoseconds since the POSIX Epoch.
+- `birthtime`¹: The timestamp indicating the creation time of this file expressed in nanoseconds since the POSIX Epoch.
+
+> [¹]: Same thing as they's counterpart in the [`stats.mode`](https://nodejs.org/api/fs.html#statsmode), [`stats.atimeNs`](https://nodejs.org/api/fs.html#statsatimens) [`stats.ctimeNs`](https://nodejs.org/api/fs.html#statsctimens) [`stats.mtimeNs`](https://nodejs.org/api/fs.html#statsmtimens) [`stats.birthtimeNs`](https://nodejs.org/api/fs.html#statsbirthtimens) from NodeJS
 
 ### `extractAll(data: ArrayBufferLike, passphrase?: string | undefined): Entry[]`
 

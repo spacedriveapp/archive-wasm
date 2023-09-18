@@ -33,30 +33,36 @@ import {
 
 disableWarning()
 
-const licenseFile = fs.readFileSync(new URL('../LICENSE.md', import.meta.url))
+const d = new TextDecoder()
+const licenseFile = d.decode(fs.readFileSync(new URL('../LICENSE.md', import.meta.url)))
 const licenseFileStat = fs.statSync(new URL('../LICENSE.md', import.meta.url), { bigint: true })
-const preambleFile = fs.readFileSync(new URL('../PREAMBLE', import.meta.url))
+const preambleFile = d.decode(fs.readFileSync(new URL('../PREAMBLE', import.meta.url)))
 const preambleFileStat = fs.statSync(new URL('../PREAMBLE', import.meta.url), { bigint: true })
 
 const licenseCheck = (t, archivePath, passphrase, mode) => {
-  const d = new TextDecoder()
   const archiveFile = fs.readFileSync(new URL(archivePath, import.meta.url))
 
-  let entry
   let entries = extract(archiveFile, passphrase)
   if (mode) entries = Array.from(entries)
 
-  entry = mode ? entries[0] : entries.next().value
-  t.is(entry.path, 'LICENSE.md')
-  t.is(entry.size, licenseFileStat.size)
-  t.is(entry.mode, Number(licenseFileStat.mode))
-  t.is(d.decode(entry.data), d.decode(licenseFile))
-
-  entry = mode ? entries[1] : entries.next().value
-  t.is(entry.path, 'PREAMBLE')
-  t.is(entry.size, preambleFileStat.size)
-  t.is(entry.mode, Number(preambleFileStat.mode))
-  t.is(d.decode(entry.data), d.decode(preambleFile))
+  let i = 0
+  for (const [path, data, stat] of [
+    ['LICENSE.md', licenseFile, licenseFileStat],
+    ['PREAMBLE', preambleFile, preambleFileStat],
+  ]) {
+    const entry = mode ? entries[i] : entries.next().value
+    t.false(entry == null)
+    t.is(entry.path, path)
+    t.is(entry.size, stat.size)
+    t.is(entry.mode, Number(stat.mode))
+    t.is(entry.mode, Number(stat.mode))
+    t.is(d.decode(entry.data), data)
+    t.true(entry.atime >= 0n)
+    t.true(entry.ctime >= 0n)
+    t.true(entry.mtime >= 0n)
+    t.true(entry.birthtime >= 0n)
+    i++
+  }
 }
 
 for (let archive of [
