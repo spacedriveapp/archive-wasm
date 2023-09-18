@@ -306,7 +306,7 @@ export const getEntryMode = /** @type {GetEntryModeCb} */ (
 )
 
 /**
- * long archive_entry_atime(struct archive_entry *archive)
+ * time_t	 archive_entry_atime(struct archive_entry *archive);
  *
  * @callback GetEntryAtimeCb
  * @param {Pointer} archive Pointer to archive struct
@@ -317,7 +317,7 @@ export const getEntryAtime = /** @type {GetEntryAtimeCb} */ (
 )
 
 /**
- * long archive_entry_ctime(struct archive_entry *archive)
+ * time_t archive_entry_ctime(struct archive_entry *archive)
  *
  * @callback GetEntryCtimeCb
  * @param {Pointer} archive Pointer to archive struct
@@ -328,7 +328,7 @@ export const getEntryCtime = /** @type {GetEntryCtimeCb} */ (
 )
 
 /**
- * long archive_entry_mtime(struct archive_entry *archive)
+ * time_t archive_entry_mtime(struct archive_entry *archive)
  *
  * @callback GetEntryMtimeCb
  * @param {Pointer} archive Pointer to archive struct
@@ -339,7 +339,7 @@ export const getEntryMtime = /** @type {GetEntryMtimeCb} */ (
 )
 
 /**
- * long archive_entry_birthtime(struct archive_entry *archive)
+ * time_t archive_entry_birthtime(struct archive_entry *archive)
  *
  * @callback GetEntryBirthtimeCb
  * @param {Pointer} archive Pointer to archive struct
