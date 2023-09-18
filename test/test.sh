@@ -27,6 +27,9 @@ cd "$(dirname "$0")/.."
 
 # Create test archives
 echo "Creating test archives..." >&2
+rar a test/license.rar LICENSE.md PREAMBLE -idq
+rar a test/license.ecrypted.rar LICENSE.md PREAMBLE -p12345678 -idq
+rar a test/license.hecrypted.rar LICENSE.md PREAMBLE -hp12345678 -idq
 7zz a test/license.7z LICENSE.md PREAMBLE >/dev/null
 7zz a test/license.encrypted.7z LICENSE.md PREAMBLE -p12345678 >/dev/null
 zip -q test/license.zip LICENSE.md PREAMBLE

@@ -28,6 +28,7 @@ import {
   disableWarning,
   FileReadError,
   PassphraseError,
+  ArchiveError,
 } from '../src/archive.mjs'
 
 disableWarning()
@@ -60,6 +61,7 @@ const licenseCheck = (t, archivePath, passphrase, mode) => {
 
 for (let archive of [
   'license.7z',
+  'license.rar',
   'license.tgz',
   'license.tlz',
   'license.tzo',
@@ -81,6 +83,20 @@ test('Test 7z encrypted are not supported error', t => {
   const archiveFile = fs.readFileSync(new URL('license.encrypted.7z', import.meta.url))
   t.throws(() => extractAll(archiveFile, '12345678'), {
     instanceOf: FileReadError,
+  })
+})
+
+test('Test rar encrypted are not supported error', t => {
+  const archiveFile = fs.readFileSync(new URL('license.ecrypted.rar', import.meta.url))
+  t.throws(() => extractAll(archiveFile, '12345678'), {
+    instanceOf: FileReadError,
+  })
+})
+
+test('Test rar headers encrypted are not supported error', t => {
+  const archiveFile = fs.readFileSync(new URL('license.hecrypted.rar', import.meta.url))
+  t.throws(() => extractAll(archiveFile, '12345678'), {
+    instanceOf: ArchiveError,
   })
 })
 
