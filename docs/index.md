@@ -4,7 +4,7 @@
 <dt><a href="#module_archive-wasm">archive-wasm</a></dt>
 <dd><p>Idiomatic JavaScript API for extracting most archive files with LibArchive</p>
 </dd>
-<dt><a href="#module_archive-wasm/fs">archive-wasm/fs</a></dt>
+<dt><a href="#archive-wasm/src/fs.module_mjs">archive-wasm/src/fs.mjs</a></dt>
 <dd><p>Utilities for extracting archives to disk using NodeJS&#39;s fs API</p>
 </dd>
 </dl>
@@ -89,12 +89,12 @@ A compressed data entry inside an archive
 | birthtime | <code>bigint</code> | The timestamp indicating the creation time of this file expressed in nanoseconds since the POSIX Epoch. |
 | data | <code>ArrayBufferLike</code> | An `ArrayBuffer` containing the entry's data. |
 
-<a name="module_archive-wasm/fs"></a>
+<a name="archive-wasm/src/fs.module_mjs"></a>
 
-## archive-wasm/fs
+## archive-wasm/src/fs.mjs
 Utilities for extracting archives to disk using NodeJS's fs API
 
-<a name="module_archive-wasm/fs.extractTo"></a>
+<a name="archive-wasm/src/fs.module_mjs.extractTo"></a>
 
 ### fs.extractTo(data, out, [passphrase])
 Extract all supported archive entries inside a given path
@@ -103,7 +103,7 @@ Extract all supported archive entries inside a given path
   Any extra entry type, or invalid entry, in the archive will be skipped (with a warning printed to console)
   This function throws if it attempts to overwrite any existing file
 
-**Kind**: static method of [<code>archive-wasm/fs</code>](#module_archive-wasm/fs)  
+**Kind**: static method of [<code>archive-wasm/src/fs.mjs</code>](#archive-wasm/src/fs.module_mjs)  
 
 | Param | Type | Description |
 | --- | --- | --- |

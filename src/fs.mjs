@@ -18,7 +18,7 @@
 
 /**
  * @file Utilities for extracting archives to disk using NodeJS's fs API
- * @module archive-wasm/fs
+ * @module archive-wasm/src/fs.mjs
  * @typicalname fs
  */
 
