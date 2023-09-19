@@ -35,7 +35,7 @@ import {
   FileReadError,
   NullError,
 } from './errors.mjs'
-import lib from './module.mjs'
+import { wasm } from './libarchive.mjs'
 import { Pointer } from './pointer.mjs'
 
 /**
@@ -47,7 +47,7 @@ import { Pointer } from './pointer.mjs'
  * @returns {string} Last error message that occurred, empty string if no error has occurred yet
  */
 const getError = /** @type {GetErrorCb} */ (
-  lib.cwrap('archive_error_string', 'string', ['number'])
+  wasm.cwrap('archive_error_string', 'string', ['number'])
 )
 
 /**
@@ -59,7 +59,7 @@ const getError = /** @type {GetErrorCb} */ (
  * @returns {number} Last error code that occurred, zero if no error has occurred yet
  */
 const getErrorCode = /** @type {getErrorCodeCb} */ (
-  lib.cwrap('archive_errno', 'number', ['number'])
+  wasm.cwrap('archive_errno', 'number', ['number'])
 )
 
 /**
@@ -69,7 +69,9 @@ const getErrorCode = /** @type {getErrorCodeCb} */ (
  * @callback clearErrorCb
  * @param {number} archive Pointer to archive struct
  */
-const clearError = /** @type {clearErrorCb} */ (lib.cwrap('archive_clear_error', null, ['number']))
+const clearError = /** @type {clearErrorCb} */ (
+  wasm.cwrap('archive_clear_error', null, ['number'])
+)
 
 /**
  * Wrap calls that interact with archive to do erro checking/clean-up
@@ -139,7 +141,7 @@ function errorCheck(cb, checkReturn) {
  * @returns {number} Pointer to struct representing the opened archive
  */
 const _openArchive = /** @type {OpenArchiveCb} */ (
-  lib.cwrap('open_archive', 'number', ['number', 'number', 'string'])
+  wasm.cwrap('open_archive', 'number', ['number', 'number', 'string'])
 )
 
 /**
@@ -182,7 +184,7 @@ export function openArchive(buffer, passphrase) {
 
 /** @private  */
 export const getNextEntry = /** @type {GetNextEntryCb} */ (
-  errorCheck(lib.cwrap('get_next_entry', 'number', ['number']), null)
+  errorCheck(wasm.cwrap('get_next_entry', 'number', ['number']), null)
 )
 
 /**
@@ -194,7 +196,7 @@ export const getNextEntry = /** @type {GetNextEntryCb} */ (
  * @returns {number} Pointer to file data buffer
  */
 const _getFileData = /** @type {GetFileDataCb} */ (
-  lib.cwrap('get_filedata', 'number', ['number', 'number'])
+  wasm.cwrap('get_filedata', 'number', ['number', 'number'])
 )
 
 /**
@@ -261,7 +263,7 @@ export function getFileData(archive, buffsize) {
  * @param {import('./pointer.mjs').Pointer} archive Pointer to archive struct
  */
 const _closeArchive = /** @type {CloseArchiveCb} */ (
-  errorCheck(lib.cwrap('archive_read_free', 'number', ['number']), true)
+  errorCheck(wasm.cwrap('archive_read_free', 'number', ['number']), true)
 )
 
 /**
@@ -288,7 +290,7 @@ export function closeArchive(archive) {
 
 /** @private */
 export const getEntrySize = /** @type {GetEntrySizeCb} */ (
-  errorCheck(lib.cwrap('archive_entry_size', 'number', ['number']), false)
+  errorCheck(wasm.cwrap('archive_entry_size', 'number', ['number']), false)
 )
 
 /**
@@ -302,7 +304,7 @@ export const getEntrySize = /** @type {GetEntrySizeCb} */ (
 
 /** @private */
 export const getEntryMode = /** @type {GetEntryModeCb} */ (
-  errorCheck(lib.cwrap('archive_entry_mode', 'number', ['number']), false)
+  errorCheck(wasm.cwrap('archive_entry_mode', 'number', ['number']), false)
 )
 
 /**
@@ -315,7 +317,7 @@ export const getEntryMode = /** @type {GetEntryModeCb} */ (
 
 /** @private */
 export const getEntryAtime = /** @type {GetEntryAtimeCb} */ (
-  errorCheck(lib.cwrap('archive_entry_atime', 'number', ['number']), false)
+  errorCheck(wasm.cwrap('archive_entry_atime', 'number', ['number']), false)
 )
 
 /**
@@ -328,7 +330,7 @@ export const getEntryAtime = /** @type {GetEntryAtimeCb} */ (
 
 /** @private */
 export const getEntryCtime = /** @type {GetEntryCtimeCb} */ (
-  errorCheck(lib.cwrap('archive_entry_ctime', 'number', ['number']), false)
+  errorCheck(wasm.cwrap('archive_entry_ctime', 'number', ['number']), false)
 )
 
 /**
@@ -341,7 +343,7 @@ export const getEntryCtime = /** @type {GetEntryCtimeCb} */ (
 
 /** @private */
 export const getEntryMtime = /** @type {GetEntryMtimeCb} */ (
-  errorCheck(lib.cwrap('archive_entry_mtime', 'number', ['number']), false)
+  errorCheck(wasm.cwrap('archive_entry_mtime', 'number', ['number']), false)
 )
 
 /**
@@ -354,7 +356,7 @@ export const getEntryMtime = /** @type {GetEntryMtimeCb} */ (
 
 /** @private */
 export const getEntrySymlink = /** @type {GetEntrySymlinkCb} */ (
-  errorCheck(lib.cwrap('archive_entry_symlink_utf8', 'string', ['number']), false)
+  errorCheck(wasm.cwrap('archive_entry_symlink_utf8', 'string', ['number']), false)
 )
 
 /**
@@ -367,7 +369,7 @@ export const getEntrySymlink = /** @type {GetEntrySymlinkCb} */ (
 
 /** @private */
 export const getEntryHardlink = /** @type {GetEntryHardlinkCb} */ (
-  errorCheck(lib.cwrap('archive_entry_hardlink_utf8', 'string', ['number']), false)
+  errorCheck(wasm.cwrap('archive_entry_hardlink_utf8', 'string', ['number']), false)
 )
 
 /**
@@ -381,7 +383,7 @@ export const getEntryHardlink = /** @type {GetEntryHardlinkCb} */ (
 
 /** @private */
 export const getEntryPathName = /** @type {GetEntryNameCb} */ (
-  errorCheck(lib.cwrap('archive_entry_pathname_utf8', 'string', ['number']), null)
+  errorCheck(wasm.cwrap('archive_entry_pathname_utf8', 'string', ['number']), null)
 )
 
 /**
@@ -394,5 +396,5 @@ export const getEntryPathName = /** @type {GetEntryNameCb} */ (
 
 /** @private */
 export const getEntryBirthtime = /** @type {GetEntryBirthtimeCb} */ (
-  errorCheck(lib.cwrap('archive_entry_birthtime', 'number', ['number']), false)
+  errorCheck(wasm.cwrap('archive_entry_birthtime', 'number', ['number']), false)
 )

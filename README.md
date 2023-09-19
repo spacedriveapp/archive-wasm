@@ -19,7 +19,7 @@ To use Archive-Wasm in your project, you can install it via npm:
 - NodeJS >= 18
 - Chromium & Cia. >= 109
 - Safari >= 15
-- Firefox >= 115
+- Firefox >= 102
 
 ## Usage
 
@@ -43,7 +43,7 @@ for (const entry of extract(archiveData)) {
 
 Archive-Wasm supports the same archive formats as the full version of [LibArchive](https://libarchive.org/), with the exception of the xar format and grzip/lrzip compressions:
 
-- Reads a variety of formats, including tar, pax, cpio, zip, lha, ar, cab, mtree, rar, and ISO images.
+- Reads a variety of formats, including 7z, tar, pax, cpio, zip, lha, ar, cab, mtree, rar, and ISO images.
 - Automatically handles archives compressed with compress, bzip2, gzip, lz4, lzip, lzop, lzma/xz, zstd.
 
 ### Encrypted formats
@@ -61,7 +61,9 @@ Feel free to send PRs and open issues.
 ## TODO
 
 - Add browser tests
+- Add pax, cpio, lha, ar, cab, mtree, iso tests
 - Handle extracting sparse entries
+- Add file override option in `extractTo`
 
 ## License
 

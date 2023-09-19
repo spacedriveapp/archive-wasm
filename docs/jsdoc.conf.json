@@ -2,7 +2,5 @@
   "source": {
     "includePattern": ".+\\.(js(doc|x)?|mjs)$"
   },
-  "plugins": [
-    "node_modules/jsdoc-tsimport-plugin/index.js"
-  ]
+  "plugins": ["node_modules/jsdoc-tsimport-plugin/index.js"]
 }

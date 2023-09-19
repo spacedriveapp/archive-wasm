@@ -15,12 +15,10 @@ set -- WASM true \
   SUPPORT_LONGJMP "'wasm'" \
   SUPPORT_BIG_ENDIAN true \
   ALLOW_MEMORY_GROWTH true \
-  MIN_IE_VERSION -1 \
   MIN_NODE_VERSION 180000 \
-  MIN_EDGE_VERSION -1 \
   MIN_CHROME_VERSION 109 \
   MIN_SAFARI_VERSION 150601 \
-  MIN_FIREFOX_VERSION 115
+  MIN_FIREFOX_VERSION 102
 
 while [ "$#" -gt 0 ]; do
   sed -i -e "s/^\s*var\s\{1,\}${1}\s\{1,\}=.*$/var ${1} = ${2};/g" /emsdk/upstream/emscripten/src/settings.js

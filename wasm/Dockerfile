@@ -250,6 +250,7 @@ ENV EMCC_CFLAGS='-DLIBARCHIVE_STATIC'
 RUN emcc -c ./wrapper.c -I "${SYSROOT}/include" $CFLAGS
 RUN mkdir wasm
 RUN printf "\n// @ts-nocheck\n" >pre.js
+RUN printf "\nexport const wasm = await wasmFactory()\n" >post.js
 RUN emcc ./wrapper.o \
 	"${SYSROOT}/lib/libarchive.a" \
 	"${SYSROOT}/lib/liblz4.a" \
@@ -260,12 +261,13 @@ RUN emcc ./wrapper.o \
 	"${SYSROOT}/lib/libmbedx509.a" \
 	"${SYSROOT}/lib/libmbedcrypto.a" \
 	"${SYSROOT}/lib/libbz2_static.a" \
-	-o ./wasm/libarchive.mjs $CFLAGS --lto --pic --strip-all --extern-pre-js=/src/pre.js \
+	-o ./wasm/libarchive.mjs $CFLAGS --lto --pic --strip-all --extern-pre-js=/src/pre.js --extern-post-js=/src/post.js \
 	-s USE_ZLIB=1 \
 	-s POLYFILL=0 \
 	-s EXPORT_ES6=1 \
 	-s INVOKE_RUN=0 \
 	-s MODULARIZE=1 \
+	-s EXPORT_NAME=wasmFactory \
 	-s EXPORTED_FUNCTIONS=@/src/lib.exports \
 	-s EMIT_PRODUCERS_SECTION=1 \
 	-s EMIT_EMSCRIPTEN_LICENSE=1 \

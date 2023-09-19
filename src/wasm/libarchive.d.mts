@@ -51,28 +51,7 @@ type ReturnToType<R extends Emscripten.JSType | null> = R extends null
   : StringToType<Exclude<R, null>>
 
 interface EmscriptenModuleProps {
-  quit(status: number, toThrow: Error): never
-  onExit(code: number): void
-  print(str: string): void
-  printErr(str: string): void
-  setStatus(status: string): void
-  monitorRunDependencies(id: number): void
   thisProgram: string
-  arguments: string[]
-  preInit: Array<{ (): void }>
-  preRun: Array<{ (): void }>
-  postRun: Array<{ (): void }>
-  onAbort: { (what: unknown): void }
-  onRuntimeInitialized: { (): void }
-  noInitialRun: boolean
-  noExitRuntime: boolean
-  wasmBinary: ArrayBuffer
-  wasmMemory: WebAssembly.Memory
-
-  instantiateWasm(
-    imports: Emscripten.WebAssemblyImports,
-    successCallback: (module: WebAssembly.Module) => void
-  ): Emscripten.WebAssemblyExports
   locateFile(url: string, scriptDirectory: string): string
 }
 
@@ -81,7 +60,6 @@ export interface EmscriptenModule extends EmscriptenModuleProps {
   calledRun: boolean
   inspect(): string
 
-  INITIAL_MEMORY: number
   HEAP8: Int8Array
   HEAP16: Int16Array
   HEAP32: Int32Array
@@ -103,7 +81,7 @@ export interface EmscriptenModule extends EmscriptenModuleProps {
 }
 
 function instantiateModule(
-  moduleOverrides: Partial<EmscriptenModuleProps>
+  moduleOverrides?: Partial<EmscriptenModuleProps>
 ): Promise<EmscriptenModule>
 
 export default instantiateModule

@@ -27,3 +27,5 @@ $_manager cp "$_id:/wasm" "${_dist}/"
 $_manager rm -v "$_id"
 
 npx eslint --no-ignore --rule 'jsdoc/require-jsdoc: off' --fix "${_dist}/wasm/libarchive.mjs" >/dev/null || true
+sed -i.bak -e '/export default/d' "${_dist}/wasm/libarchive.mjs"
+rm -f "${_dist}/wasm/libarchive.mjs.bak"

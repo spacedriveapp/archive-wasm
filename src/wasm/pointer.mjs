@@ -23,7 +23,7 @@
  */
 
 import { NullError } from './errors.mjs'
-import lib from './module.mjs'
+import { wasm } from './libarchive.mjs'
 
 /**
  * void * malloc(size_t size);
@@ -31,14 +31,14 @@ import lib from './module.mjs'
  * @param {number} size Memory size to be allocated
  * @returns {number} Pointer to allocated memory
  */
-const malloc = /** @type {MallocCB} */ (lib.cwrap('malloc', 'number', ['number']))
+const malloc = /** @type {MallocCB} */ (wasm.cwrap('malloc', 'number', ['number']))
 
 /**
  * void free(void *ptr);
  * @callback FreeCB
  * @param {number} pointer Pointer to memory to be freed
  */
-const free = /** @type {FreeCB} */ (lib.cwrap('free', null, ['number']))
+const free = /** @type {FreeCB} */ (wasm.cwrap('free', null, ['number']))
 
 /**
  * Registry to automatically free any unreferenced {@link Pointer}
@@ -147,7 +147,7 @@ export class Pointer {
 
     if (this.isNull()) throw new NullError('Failed to fill due to Pointer.NULL')
 
-    lib.HEAP8.set(array, this.#pointer)
+    wasm.HEAP8.set(array, this.#pointer)
 
     return this
   }
@@ -172,7 +172,7 @@ export class Pointer {
       throw new Error('Reading managed pointer')
     }
 
-    return lib.HEAP_DATA_VIEW.buffer.slice(this.#pointer, this.#pointer + size)
+    return wasm.HEAP_DATA_VIEW.buffer.slice(this.#pointer, this.#pointer + size)
   }
 
   /**
@@ -211,7 +211,7 @@ export class Pointer {
       if (pointer === Pointer.NULL) throw new NullError('Failed to allocate memory')
 
       if (!this.isNull()) {
-        lib.HEAP8.copyWithin(pointer, this.#pointer, this.#pointer + Math.min(size, this.#size))
+        wasm.HEAP8.copyWithin(pointer, this.#pointer, this.#pointer + Math.min(size, this.#size))
         this.free()
       }
 
