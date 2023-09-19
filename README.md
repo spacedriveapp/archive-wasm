@@ -52,44 +52,7 @@ Only encrypted zip is supported in [LibArchive](https://github.com/libarchive/li
 
 ## API
 
-### `extract(data: ArrayBufferLike, passphrase?: string | undefined): Generator<Entry, void, unknown>`
-
-Extracts entries from an archive.
-
-- `data`: The archive data as an `ArrayBuffer`.
-- `passphrase` (optional): Passphrase to decrypt protected zip files.
-
-Returns a generator that yields objects representing archive entries with the following properties:
-
-- `size`: Size of the entry in bytes.
-- `mode`¹: A bit-field describing the file type and mode.
-- `path`: Path of the entry within the archive.
-- `data`: An `ArrayBuffer` containing the entry's data.
-- `atime`¹: The timestamp indicating the last time this file was accessed expressed in nanoseconds since the POSIX Epoch.
-- `ctime`¹: The timestamp indicating the last time the file status was changed expressed in nanoseconds since the POSIX Epoch.
-- `mtime`¹: The timestamp indicating the last time this file was modified expressed in nanoseconds since the POSIX Epoch.
-- `birthtime`¹: The timestamp indicating the creation time of this file expressed in nanoseconds since the POSIX Epoch.
-
-> [¹]: Same thing as they's counterpart in the [`stats.mode`](https://nodejs.org/api/fs.html#statsmode), [`stats.atimeNs`](https://nodejs.org/api/fs.html#statsatimens) [`stats.ctimeNs`](https://nodejs.org/api/fs.html#statsctimens) [`stats.mtimeNs`](https://nodejs.org/api/fs.html#statsmtimens) [`stats.birthtimeNs`](https://nodejs.org/api/fs.html#statsbirthtimens) from NodeJS
-
-### `extractAll(data: ArrayBufferLike, passphrase?: string | undefined): Entry[]`
-
-Uncompress all entries in an archive.
-
-- `data`: The archive data as an `ArrayBuffer`.
-- `passphrase` (optional): Passphrase to decrypt protected zip files.
-
-Returns an array containing all the entries included in the archive.
-
-> This function is the preferred choice over `extract` when your use case involves accessing the content data of all entries within the archive, and memory usage is not a critical concern. It provides a performance advantage for this specific scenario by circumventing certain workarounds required to support random-time access to an entry's data within LibArchive's streaming process model. If your goal is to process all entries and retrieve their content, `extractAll` is the recommended method.
-
-### `getEntryType(entry: Entry): 'FILE' | 'NAMED_PIPE' | 'SOCKET' | 'DIR' | 'BLOCK_DEVICE' | 'SYMBOLIC_LINK' | 'CHARACTER_DEVICE'`
-
-Parse an entry's mode to retrieve its type.
-
-- `entry`: The archive entry.
-
-Returns a string indicating the entry's type
+Check the [docs](./docs/index.md)
 
 ## Contributing
 

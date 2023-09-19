@@ -16,12 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file Manage raw C pointers semi-automatically
+ * @module archive-wasm/wasm/pointer
+ * @typicalname pointer
+ */
+
 import { NullError } from './errors.mjs'
 import lib from './module.mjs'
 
 /**
  * void * malloc(size_t size);
- *
  * @callback MallocCB
  * @param {number} size Memory size to be allocated
  * @returns {number} Pointer to allocated memory
@@ -30,7 +35,6 @@ const malloc = /** @type {MallocCB} */ (lib.cwrap('malloc', 'number', ['number']
 
 /**
  * void free(void *ptr);
- *
  * @callback FreeCB
  * @param {number} pointer Pointer to memory to be freed
  */
@@ -38,18 +42,19 @@ const free = /** @type {FreeCB} */ (lib.cwrap('free', null, ['number']))
 
 /**
  * Registry to automatically free any unreferenced {@link Pointer}
- * @type {FinalizationRegistry<number>}
+ * @type {FinalizationRegistry.<number>}
  */
 const MemoryRegistry = new FinalizationRegistry(pointer => {
   free(pointer)
 })
 
+/** @private */
 export class Pointer {
   static NULL = 0
 
   /**
    * Free raw pointer
-   * @param {number} pointer
+   * @param {number} pointer Raw C pointer
    */
   static free(pointer) {
     if (pointer === Pointer.NULL) return
@@ -64,9 +69,8 @@ export class Pointer {
 
   /**
    * High level representation of a WASM memory pointer
-   *
-   * @param {number} [size]
-   * @param {number} [pointer]
+   * @param {number} [size] Pointer size, 0 means that pointer is managed
+   * @param {number} [pointer] Raw C pointer
    */
   constructor(size, pointer) {
     if (typeof size === 'number' && size < 0) throw new Error('Size must be >= 0')
@@ -85,8 +89,7 @@ export class Pointer {
 
   /**
    * Get underlining raw pointer
-   *
-   * @returns {number}
+   * @returns {number} Raw C pointer
    */
   get raw() {
     return this.#pointer
@@ -95,13 +98,10 @@ export class Pointer {
   /**
    * Get possible allocated size for pointer
    *
-   * .. note::
-   *    This can be null if pointer is externally managed
+   * > This can be null if pointer is externally managed
    *
-   * .. note::
-   *    This will be zero when pointer is NULL
-   *
-   * @returns {number?}
+   * > This will be zero when pointer is NULL
+   * @returns {number?} Allocated pointer size
    */
   get size() {
     return this.isManaged() ? null : this.#size
@@ -110,13 +110,11 @@ export class Pointer {
   /**
    * Fill memory with data
    *
-   * .. note::
-   *    When grow is false, this method throws when trying to fill a Pointer.NULL pointer,
-   *    otherwise it will realloc the Pointer so it can fit the given data
-   *
+   * > When grow is false, this method throws when trying to fill a Pointer.NULL pointer,
+   *   otherwise it will realloc the Pointer so it can fit the given data
    * @param {bigint | number | string | ArrayLike.<number> | ArrayBufferLike} data to copy to memory
-   * @param {boolean} [grow=false] Wheter to alloc more data to make sure data fits inside {@link Pointer}
-   * @returns {Pointer}
+   * @param {boolean} [grow] Wheter to alloc more data to make sure data fits inside {@link Pointer}
+   * @returns {Pointer} This pointer
    */
   fill(data, grow = false) {
     if (this.isManaged()) throw new Error("Can't modify managed Pointer")
@@ -156,7 +154,6 @@ export class Pointer {
 
   /**
    * Copy data from WASM memory and return it
-   *
    * @param {number} [size] How much to read from memory
    * @returns {ArrayBufferLike} Memory view
    */
@@ -197,9 +194,9 @@ export class Pointer {
 
   /**
    * Change pointer size
-   *
    * @param {number} size New pointer size, 0 frees the pointer
-   * @returns {Pointer}
+   * @param {boolean} avoidShrinking Don't reallocate when size is less then current allocated size
+   * @returns {Pointer} This pointer
    */
   realloc(size, avoidShrinking = false) {
     if (size < 0) throw new Error('Size must be >= 0')

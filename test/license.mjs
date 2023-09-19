@@ -30,6 +30,7 @@ import {
   PassphraseError,
   ArchiveError,
 } from '../src/archive.mjs'
+import { FILETYPE_FLAG } from '../src/wasm/enums.mjs'
 
 disableWarning()
 
@@ -54,8 +55,9 @@ const licenseCheck = (t, archivePath, passphrase, mode) => {
     t.false(entry == null)
     t.is(entry.path, path)
     t.is(entry.size, stat.size)
-    t.is(entry.mode, Number(stat.mode))
-    t.is(entry.mode, Number(stat.mode))
+    t.is(entry.perm, ~FILETYPE_FLAG & Number(stat.mode))
+    t.is(entry.type, 'FILE')
+    t.is(entry.link, null)
     t.is(d.decode(entry.data), data)
     t.true(entry.atime >= 0n)
     t.true(entry.ctime >= 0n)
@@ -84,6 +86,14 @@ for (let archive of [
   test(`Test ${archive} with in loop access`, async t =>
     licenseCheck(t, archive, passphrase, false))
 }
+
+test('Test zip bomb', t => {
+  // from: https://github.com/iamtraction/ZOD
+  const archiveFile = fs.readFileSync(new URL('bomb.zip', import.meta.url))
+  t.throws(() => extractAll(archiveFile), {
+    instanceOf: ArchiveError,
+  })
+})
 
 test('Test 7z encrypted are not supported error', t => {
   const archiveFile = fs.readFileSync(new URL('license.encrypted.7z', import.meta.url))

@@ -26,4 +26,4 @@ _id="$($_manager create archive-wasm:latest true)"
 $_manager cp "$_id:/wasm" "${_dist}/"
 $_manager rm -v "$_id"
 
-npx eslint --no-ignore --fix "${_dist}/wasm/libarchive.mjs" >/dev/null || true
+npx eslint --no-ignore --rule 'jsdoc/require-jsdoc: off' --fix "${_dist}/wasm/libarchive.mjs" >/dev/null || true

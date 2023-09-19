@@ -6,7 +6,7 @@
     "url": "https://github.com/spacedriveapp/archive-wasm/issues"
   },
   "author": "Vítor Vasconcellos",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18"
@@ -29,17 +29,18 @@
   },
   "description": "LibArchive compiled to WASM with a idiomatic JS api",
   "scripts": {
-    "prelint": "eslint ./src --ext .js,.mjs --cache",
+    "docs": "npx jsdoc2md -c docs/jsdoc.conf.json src/*.mjs > docs/index.md",
+    "prelint": "eslint ./src --ext .js,.ts,.mjs,.d.ts,.d.mts --cache",
     "lint": "tsc --noEmit --emitDeclarationOnly false",
-    "preformat": "eslint . --ext .js,.mjs --cache --rule 'prettier/prettier: off' --max-warnings 0 --fix",
-    "format": "prettier --write --log-level=warn '**/*.{js,mjs,json}'",
+    "preformat": "eslint . --ext .js,.ts,.mjs,.d.ts,.d.mts --cache --rule 'prettier/prettier: off' --max-warnings 0 --fix",
+    "format": "prettier --write --log-level=warn '**/*.{js,ts,mjs,json,d.ts,d.mts}'",
     "clean": "git clean -qfX ./src",
     "build:wasm": "./wasm/build.sh",
     "prebuild:js": "npm run prelint",
     "build:js": "tsc",
-    "postbuild:js": "npm run build:wasm",
+    "postbuild:js": "npm run format",
     "prebuild": "npm run clean",
-    "build": "npm run build:js",
+    "build": "conc -c auto --timings --kill-others-on-fail 'npm:build:*'",
     "test": "test/test.sh",
     "prebuildtest": "npm run build",
     "buildtest": "npm run test",
@@ -81,6 +82,7 @@
         }
       ],
       "no-proto": "error",
+      "valid-jsdoc": "off",
       "import/order": [
         "error",
         {
@@ -94,6 +96,7 @@
         "error",
         "PREAMBLE"
       ],
+      "jsdoc/require-returns-check": "off",
       "standard/no-callback-literal": "off"
     },
     "parser": "@babel/eslint-parser",
@@ -105,8 +108,17 @@
       "eslint:recommended",
       "standard",
       "plugin:import/recommended",
-      "plugin:prettier/recommended"
+      "plugin:prettier/recommended",
+      "plugin:jsdoc/recommended-typescript-flavor"
     ],
+    "settings": {
+      "jsdoc": {
+        "mode": "typescript",
+        "tagNamePreference": {
+          "typicalname": "typicalname"
+        }
+      }
+    },
     "overrides": [
       {
         "files": [
@@ -127,10 +139,78 @@
       },
       {
         "files": [
-          "src/wasm/libarchive.mjs"
+          "src/wasm/libarchive.mjs",
+          "src/wasm/libarchive.d.mts"
         ],
         "rules": {
           "license-header/header": "off"
+        }
+      },
+      {
+        "files": [
+          "*.ts",
+          "*.d.ts",
+          "*.d.mts"
+        ],
+        "rules": {
+          "no-void": "off",
+          "@typescript-eslint/no-extra-semi": "off",
+          "@typescript-eslint/unbound-method": [
+            "error",
+            {
+              "ignoreStatic": true
+            }
+          ],
+          "@typescript-eslint/no-explicit-any": [
+            "error",
+            {
+              "fixToUnknown": true
+            }
+          ],
+          "no-use-before-define": "off",
+          "@typescript-eslint/no-use-before-define": [
+            "error",
+            {
+              "ignoreTypeReferences": true
+            }
+          ],
+          "@typescript-eslint/explicit-function-return-type": [
+            "error",
+            {
+              "allowConciseArrowFunctionExpressionsStartingWithVoid": true
+            }
+          ]
+        },
+        "parser": "@typescript-eslint/parser",
+        "plugins": [
+          "@typescript-eslint"
+        ],
+        "extends": [
+          "plugin:@typescript-eslint/recommended",
+          "plugin:@typescript-eslint/recommended-requiring-type-checking",
+          "plugin:@typescript-eslint/strict",
+          "plugin:import/typescript"
+        ],
+        "parserOptions": {
+          "project": "./tsconfig.json"
+        }
+      },
+      {
+        "files": [
+          "*.d.ts",
+          "*.d.mts"
+        ],
+        "rules": {
+          "jsdoc/require-returns": "off",
+          "jsdoc/require-yields-check": "off"
+        }
+      },
+      {
+        "files": [
+          "src/wasm/enums.d.mts"
+        ],
+        "rules": {
+          "@typescript-eslint/no-unused-vars": "off"
         }
       }
     ],
@@ -159,16 +239,22 @@
     "@babel/eslint-plugin": "^7.22.10",
     "@babel/preset-env": "^7.22.15",
     "@types/node": "^20.6.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.2",
+    "@typescript-eslint/parser": "^6.7.2",
     "ava": "^5.3.1",
     "clean-package": "^2.2.0",
+    "concurrently": "^8.2.1",
     "eslint": "^8.49.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-jsdoc": "^46.8.1",
     "eslint-plugin-license-header": "^0.6.0",
     "eslint-plugin-n": "^16.1.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-promise": "^6.1.1",
+    "jsdoc-to-markdown": "^8.0.0",
+    "jsdoc-tsimport-plugin": "^1.0.5",
     "prettier": "3.0.3",
     "typescript": "^5.2.2"
   }

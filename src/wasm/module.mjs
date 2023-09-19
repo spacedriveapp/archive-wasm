@@ -16,6 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file Entrypoint for interacting with raw LibArchive WASM
+ * @module archive-wasm/wasm/module
+ * @typicalname wasm
+ */
+
 // eslint-disable-next-line import/no-unresolved
 import instantiateModule from './libarchive.mjs'
 

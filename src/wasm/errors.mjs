@@ -17,6 +17,12 @@
  */
 
 /**
+ * @file Error handling definitions
+ * @module archive-wasm/wasm/errors
+ * @typicalname errors
+ */
+
+/**
  * errno codes
  * Must be kept in sync with the definition in ../../wasm/wrapper.c
  */
@@ -27,7 +33,6 @@ export const ARCHIVE_ERRNO_MISC = -1
 export class ArchiveError extends Error {
   /**
    * Main error class
-   *
    * @param {number} code Error code
    * @param {string} message Error message
    */
@@ -55,7 +60,7 @@ export class FileReadError extends ArchiveError {}
 
 export class PassphraseError extends ArchiveError {
   /**
-   * * @param {number} code Error code
+   * @param {number} code Error code
    * @param {string} message Error message
    */
   constructor(code, message) {

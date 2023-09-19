@@ -29,7 +29,7 @@ declare namespace Emscripten {
 }
 
 // https://emscripten.org/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
-type StringToType<R extends any> = R extends Emscripten.JSType
+type StringToType<R> = R extends Emscripten.JSType
   ? {
       number: number | bigint
       string: string
@@ -43,7 +43,7 @@ type ArgsToType<T extends Array<Emscripten.JSType | null>> = Extract<
   {
     [P in keyof T]: StringToType<T[P]>
   },
-  any[]
+  unknown[]
 >
 
 type ReturnToType<R extends Emscripten.JSType | null> = R extends null
@@ -62,7 +62,7 @@ interface EmscriptenModuleProps {
   preInit: Array<{ (): void }>
   preRun: Array<{ (): void }>
   postRun: Array<{ (): void }>
-  onAbort: { (what: any): void }
+  onAbort: { (what: unknown): void }
   onRuntimeInitialized: { (): void }
   noInitialRun: boolean
   noExitRuntime: boolean

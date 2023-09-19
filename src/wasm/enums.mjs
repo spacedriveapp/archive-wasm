@@ -17,6 +17,12 @@
  */
 
 /**
+ * @file Constants and Enums used by the raw LibArchive API
+ * @module archive-wasm/wasm/enums
+ * @typicalname enums
+ */
+
+/**
  * Error codes: Use archive_errno() and archive_error_string()
  * to retrieve details.  Unless specified otherwise, all functions
  * that return 'int' use these codes.
@@ -29,9 +35,8 @@
  * ARCHIVE_FAILED	(-25)	// Current operation cannot complete.
  * // But if write_header is "fatal," then this archive is dead and useless.
  * ARCHIVE_FATAL	(-30)	// No more operations are possible.
- *
  * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive.h#L188C1-L200}
- *
+ * @private
  * @readonly
  * @enum {number}
  */
@@ -55,9 +60,8 @@ export const ReturnCode = {
  * AE_IFBLK	 0060000
  * AE_IFDIR	 0040000
  * AE_IFIFO	 0010000
- *
  * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_entry.h#L187-L193}
- *
+ * @private
  * @readonly
  * @enum {number}
  */
@@ -72,7 +76,30 @@ export const EntryType = {
 }
 
 /**
+ * @readonly
+ * @enum { 'FILE' | 'NAMED_PIPE' | 'SOCKET' | 'DIR' | 'BLOCK_DEVICE' | 'SYMBOLIC_LINK' | 'CHARACTER_DEVICE'}
+ */
+export const EntryTypeName = {
+  /** @type {EntryTypeName} */
+  [EntryType.FILE]: 'FILE',
+  /** @type {EntryTypeName} */
+  [EntryType.NAMED_PIPE]: 'NAMED_PIPE',
+  /** @type {EntryTypeName} */
+  [EntryType.SOCKET]: 'SOCKET',
+  /** @type {EntryTypeName} */
+  [EntryType.DIR]: 'DIR',
+  /** @type {EntryTypeName} */
+  [EntryType.BLOCK_DEVICE]: 'BLOCK_DEVICE',
+  /** @type {EntryTypeName} */
+  [EntryType.SYMBOLIC_LINK]: 'SYMBOLIC_LINK',
+  /** @type {EntryTypeName} */
+  [EntryType.CHARACTER_DEVICE]: 'CHARACTER_DEVICE',
+}
+
+/**
  * #define AE_IFMT 0170000
  * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_entry.h#L186}
+ * @private
+ * @type {number}
  */
 export const FILETYPE_FLAG = 0o0170000
