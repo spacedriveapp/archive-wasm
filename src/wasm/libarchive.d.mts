@@ -12,17 +12,6 @@
 declare namespace Emscripten {
   type JSType = 'number' | 'string' | 'array' | 'boolean'
 
-  type WebAssemblyImports = Array<{
-    name: string
-    kind: string
-  }>
-
-  type WebAssemblyExports = Array<{
-    module: string
-    name: string
-    kind: string
-  }>
-
   interface CCallOpts {
     async?: boolean | undefined
   }
@@ -50,16 +39,7 @@ type ReturnToType<R extends Emscripten.JSType | null> = R extends null
   ? null
   : StringToType<Exclude<R, null>>
 
-interface EmscriptenModuleProps {
-  thisProgram: string
-  locateFile(url: string, scriptDirectory: string): string
-}
-
-export interface EmscriptenModule extends EmscriptenModuleProps {
-  ready: Promise<EmscriptenModule>
-  calledRun: boolean
-  inspect(): string
-
+export const wasm: {
   HEAP8: Int8Array
   HEAP16: Int16Array
   HEAP32: Int32Array
@@ -72,16 +52,16 @@ export interface EmscriptenModule extends EmscriptenModuleProps {
   HEAPU64: BigUint64Array
   HEAP_DATA_VIEW: DataView
 
+  ready: Promise<EmscriptenModule>
+  calledRun: boolean
+  thisProgram: string
+
   cwrap<I extends Array<Emscripten.JSType | null> | [], R extends Emscripten.JSType | null>(
     ident: string,
     returnType: R,
     argTypes: I,
     opts?: Emscripten.CCallOpts
   ): (...arg: ArgsToType<I>) => ReturnToType<R>
+  inspect(): string
+  locateFile(url: string, scriptDirectory: string): string
 }
-
-function instantiateModule(
-  moduleOverrides?: Partial<EmscriptenModuleProps>
-): Promise<EmscriptenModule>
-
-export default instantiateModule

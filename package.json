@@ -92,6 +92,14 @@
           "newlines-between": "always"
         }
       ],
+      "import/no-unresolved": [
+        2,
+        {
+          "ignore": [
+            "\\libarchive.mjs$"
+          ]
+        }
+      ],
       "license-header/header": [
         "error",
         "PREAMBLE"
