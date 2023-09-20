@@ -28,6 +28,19 @@ import * as path from 'node:path'
 import { extract, WARNING } from './archive.mjs'
 
 /**
+ * Options for {@link extractTo}
+ * @typedef {object} ExtractToExclusiveOpts
+ * @property {boolean} [overwrite] Allow overwriting files
+ */
+
+/**
+ * Options for {@link extractTo}
+ * @typedef {import("./archive.mjs").ExtractOpts & ExtractToExclusiveOpts} ExtractToOpts
+ */
+
+const noop = () => {}
+
+/**
  * Extract all supported archive entries inside a given path
  *
  * > Only files, directories, symlinks and hardlinks are supported.
@@ -35,9 +48,9 @@ import { extract, WARNING } from './archive.mjs'
  *   This function throws if it attempts to overwrite any existing file
  * @param {ArrayBufferLike} data Archive's data
  * @param {string} out Path where the archive entries will be extracted to
- * @param {string} [passphrase] Passphrase to decrypt protect zip archives
+ * @param {string | ExtractToOpts} [opts] Extract options, string value will be interpreted as password
  */
-export async function extractTo(data, out, passphrase) {
+export async function extractTo(data, out, opts) {
   if (
     !fs.stat(out).then(
       stat => stat.isDirectory(),
@@ -45,6 +58,9 @@ export async function extractTo(data, out, passphrase) {
     )
   )
     throw new Error("Output path isn't a valid directory")
+
+  let overwrite = false
+  if (opts && typeof opts === 'object' && opts.overwrite != null) overwrite = opts.overwrite
 
   const ops = []
 
@@ -54,7 +70,7 @@ export async function extractTo(data, out, passphrase) {
    */
   const hardlinks = {}
 
-  for (const entry of extract(data, passphrase)) {
+  for (const entry of extract(data, opts)) {
     let entryPath = path.relative(out, path.resolve(out, entry.path))
     if (!entryPath || entryPath.startsWith('..') || path.isAbsolute(entryPath)) {
       if (WARNING)
@@ -74,9 +90,10 @@ export async function extractTo(data, out, passphrase) {
               if (WARNING) console.warn(`Invalid symlink: ${entry.path}, skiping...`)
               return
             }
+            if (overwrite) await fs.unlink(entryPath).catch(noop)
             await fs.symlink(entry.link, entryPath, 'junction')
             // While this is deprecated, it calls open & fchmod under the hood, which is the right approach
-            // so keep using it to avoid having to deel with open ourselfs
+            // so keep using it to avoid having to deal with open ourselfs
             await fs.lchmod(entryPath, entry.perm)
             await fs.lutimes(entryPath, String(entry.atime), String(entry.mtime))
           })()
@@ -94,7 +111,10 @@ export async function extractTo(data, out, passphrase) {
         const data = entry.data
         ops.push(
           (async () => {
-            await fs.writeFile(entryPath, Buffer.from(data), { mode: entry.perm, flag: 'wx+' })
+            await fs.writeFile(entryPath, Buffer.from(data), {
+              mode: entry.perm,
+              flag: overwrite ? 'w+' : 'wx+',
+            })
             await fs.utimes(entryPath, String(entry.atime), String(entry.mtime))
           })()
         )
@@ -116,6 +136,7 @@ export async function extractTo(data, out, passphrase) {
         if (WARNING) console.warn(`Invalid hardlink: ${entry.path}, skiping...`)
         return
       }
+      if (overwrite) await fs.unlink(entryPath).catch(noop)
       await fs.link(entry.link, entryPath)
       await fs.chmod(entryPath, entry.perm)
       await fs.utimes(entryPath, String(entry.atime), String(entry.mtime))

@@ -61,7 +61,7 @@ Feel free to send PRs and open issues.
 ## TODO
 
 - Add browser tests
-- Add pax, cpio, lha, ar, cab, mtree, iso tests
+- Add cpio, lha, ar, mtree tests
 - Handle extracting sparse entries
 - Add file override option in `extractTo`
 

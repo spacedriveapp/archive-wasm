@@ -18,11 +18,13 @@ Idiomatic JavaScript API for extracting most archive files with LibArchive
 * [archive-wasm](#module_archive-wasm)
     * _static_
         * [.disableWarning()](#module_archive-wasm.disableWarning)
-        * [.extract(data, [passphrase])](#module_archive-wasm.extract) ⇒ <code>Generator.&lt;module:archive~Entry, void, void&gt;</code>
+        * [.extract(data, [opts])](#module_archive-wasm.extract) ⇒ <code>Generator.&lt;module:archive~Entry, void, void&gt;</code>
+            * [~passphrase](#module_archive-wasm.extract..passphrase) : <code>string</code> \| <code>undefined</code>
             * [~entry](#module_archive-wasm.extract..entry) : <code>module:archive~Entry</code>
-        * [.extractAll(data, [passphrase])](#module_archive-wasm.extractAll) ⇒ <code>Array.&lt;module:archive~Entry&gt;</code>
+        * [.extractAll(data, [opts])](#module_archive-wasm.extractAll) ⇒ <code>Array.&lt;module:archive~Entry&gt;</code>
     * _inner_
         * [~Entry](#module_archive-wasm..Entry) : <code>object</code>
+        * [~ExtractOpts](#module_archive-wasm..ExtractOpts) : <code>object</code>
 
 <a name="module_archive-wasm.disableWarning"></a>
 
@@ -32,7 +34,7 @@ Disable lib warnings
 **Kind**: static method of [<code>archive-wasm</code>](#module_archive-wasm)  
 <a name="module_archive-wasm.extract"></a>
 
-### archive.extract(data, [passphrase]) ⇒ <code>Generator.&lt;module:archive~Entry, void, void&gt;</code>
+### archive.extract(data, [opts]) ⇒ <code>Generator.&lt;module:archive~Entry, void, void&gt;</code>
 Uncompress archive and iterate through all it's entries
 
 **Kind**: static method of [<code>archive-wasm</code>](#module_archive-wasm)  
@@ -41,15 +43,24 @@ Uncompress archive and iterate through all it's entries
 | Param | Type | Description |
 | --- | --- | --- |
 | data | <code>ArrayBufferLike</code> | Archive's data |
-| [passphrase] | <code>string</code> | Passphrase to decrypt protect zip archives |
+| [opts] | <code>string</code> \| <code>module:archive~ExtractOpts</code> | Extract options, string value will be interpreted as password |
 
+
+* [.extract(data, [opts])](#module_archive-wasm.extract) ⇒ <code>Generator.&lt;module:archive~Entry, void, void&gt;</code>
+    * [~passphrase](#module_archive-wasm.extract..passphrase) : <code>string</code> \| <code>undefined</code>
+    * [~entry](#module_archive-wasm.extract..entry) : <code>module:archive~Entry</code>
+
+<a name="module_archive-wasm.extract..passphrase"></a>
+
+#### extract~passphrase : <code>string</code> \| <code>undefined</code>
+**Kind**: inner property of [<code>extract</code>](#module_archive-wasm.extract)  
 <a name="module_archive-wasm.extract..entry"></a>
 
 #### extract~entry : <code>module:archive~Entry</code>
 **Kind**: inner constant of [<code>extract</code>](#module_archive-wasm.extract)  
 <a name="module_archive-wasm.extractAll"></a>
 
-### archive.extractAll(data, [passphrase]) ⇒ <code>Array.&lt;module:archive~Entry&gt;</code>
+### archive.extractAll(data, [opts]) ⇒ <code>Array.&lt;module:archive~Entry&gt;</code>
 Uncompress all entries in an archive
 
 > This function is the preferred choice over `extract` when your use case
@@ -66,7 +77,7 @@ Uncompress all entries in an archive
 | Param | Type | Description |
 | --- | --- | --- |
 | data | <code>ArrayBufferLike</code> | Archive's data |
-| [passphrase] | <code>string</code> | Passphrase to decrypt protect zip archives |
+| [opts] | <code>string</code> \| <code>module:archive~ExtractOpts</code> | Extract options, string value will be interpreted as password |
 
 <a name="module_archive-wasm..Entry"></a>
 
@@ -89,14 +100,35 @@ A compressed data entry inside an archive
 | birthtime | <code>bigint</code> | The timestamp indicating the creation time of this file expressed in nanoseconds since the POSIX Epoch. |
 | data | <code>ArrayBufferLike</code> | An `ArrayBuffer` containing the entry's data. |
 
+<a name="module_archive-wasm..ExtractOpts"></a>
+
+### archive-wasm~ExtractOpts : <code>object</code>
+Options for [extract](extract)
+
+**Kind**: inner typedef of [<code>archive-wasm</code>](#module_archive-wasm)  
+**Properties**
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| [passphrase] | <code>string</code> |  | Passphrase to decrypt protect zip archives. |
+| [ignoreDotDir] | <code>boolean</code> | <code>true</code> | Ignore entries for '.' dir |
+
 <a name="archive-wasm/src/fs.module_mjs"></a>
 
 ## archive-wasm/src/fs.mjs
 Utilities for extracting archives to disk using NodeJS's fs API
 
+
+* [archive-wasm/src/fs.mjs](#archive-wasm/src/fs.module_mjs)
+    * _static_
+        * [.extractTo(data, out, [opts])](#archive-wasm/src/fs.module_mjs.extractTo)
+    * _inner_
+        * [~ExtractToExclusiveOpts](#archive-wasm/src/fs.module_mjs..ExtractToExclusiveOpts) : <code>object</code>
+        * [~ExtractToOpts](#archive-wasm/src/fs.module_mjs..ExtractToOpts) : <code>module:archive~ExtractOpts</code> \| <code>module:archive~ExtractToExclusiveOpts</code>
+
 <a name="archive-wasm/src/fs.module_mjs.extractTo"></a>
 
-### fs.extractTo(data, out, [passphrase])
+### fs.extractTo(data, out, [opts])
 Extract all supported archive entries inside a given path
 
 > Only files, directories, symlinks and hardlinks are supported.
@@ -109,5 +141,23 @@ Extract all supported archive entries inside a given path
 | --- | --- | --- |
 | data | <code>ArrayBufferLike</code> | Archive's data |
 | out | <code>string</code> | Path where the archive entries will be extracted to |
-| [passphrase] | <code>string</code> | Passphrase to decrypt protect zip archives |
+| [opts] | <code>string</code> \| <code>module:archive~ExtractToOpts</code> | Extract options, string value will be interpreted as password |
 
+<a name="archive-wasm/src/fs.module_mjs..ExtractToExclusiveOpts"></a>
+
+### archive-wasm/src/fs.mjs~ExtractToExclusiveOpts : <code>object</code>
+Options for [extractTo](extractTo)
+
+**Kind**: inner typedef of [<code>archive-wasm/src/fs.mjs</code>](#archive-wasm/src/fs.module_mjs)  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| [overwrite] | <code>boolean</code> | Allow overwriting files |
+
+<a name="archive-wasm/src/fs.module_mjs..ExtractToOpts"></a>
+
+### archive-wasm/src/fs.mjs~ExtractToOpts : <code>module:archive~ExtractOpts</code> \| <code>module:archive~ExtractToExclusiveOpts</code>
+Options for [extractTo](extractTo)
+
+**Kind**: inner typedef of [<code>archive-wasm/src/fs.mjs</code>](#archive-wasm/src/fs.module_mjs)  

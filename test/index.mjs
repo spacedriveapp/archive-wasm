@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { createHash } from 'node:crypto'
 import * as fs from 'node:fs'
 
 // https://github.com/avajs/ava/pull/3128
@@ -74,6 +75,9 @@ for (let archive of [
   'license.tlz',
   'license.tzo',
   'license.zip',
+  'license.iso',
+  'license.pax',
+  'license.pax.Z',
   'license.tbz2',
   'license.tar.zst',
   'license.tar.lz4',
@@ -93,6 +97,37 @@ test('Test zip bomb', t => {
   t.throws(() => extractAll(archiveFile), {
     instanceOf: ArchiveError,
   })
+})
+
+const IELPKTH_MD5 = {
+  'CHARSET.DAT': '3e7eb76bb122e29a5b60902d0caad598',
+  'TH.INF': 'f4fd1cc76da571d4dbd94bd3d6dd3caa',
+  'kbdth1.dll': '2dffc32410bbd169a3fba56fd08cf2e5',
+  'kbdth0.dll': '78b2a883a01615946b785877c2a6b51a',
+  'CP_874.NLS': '1a7902c07c1bf1f617be4dd12ed4763a',
+  'tahomabd.ttf': '4f17b1af2781d384bf955d411a7742e5',
+  'advpack.dll': '4d99bd9bb90715be7f2590bfd97b51f9',
+  'kbdth1.kbd': '504db413acfe019db89b3c0ac2f58fb2',
+  'kbdth0.kbd': 'b83828483411fd8ef7888c5f2224c3db',
+  'C_874.NLS': '7a0ee54f89ffe0f038660ba580fb4440',
+  'tahoma.ttf': '66e7a2238693879b1ab39a122a074a37',
+  'unTH.INF': 'deb2b5d83062730eb768cd5992f28176',
+  'langinst.exe': 'e5c8c7250d57cef16cb1581904ed6209',
+  'csseqchk.dll': '5db2f9eda2fb505e77b3e634b6202f52',
+}
+
+test('Test IELPKTH.CAB', t => {
+  // from: https://github.com/iamtraction/ZOD
+  const archiveFile = fs.readFileSync(new URL('IELPKTH.CAB', import.meta.url))
+
+  for (const entry of extract(archiveFile)) {
+    const md5 = IELPKTH_MD5[entry.path]
+    t.assert(typeof md5 === 'string')
+
+    const hashFunc = createHash('md5')
+    hashFunc.update(Buffer.from(entry.data))
+    t.is(md5, hashFunc.digest('hex'))
+  }
 })
 
 test('Test 7z encrypted are not supported error', t => {
@@ -134,4 +169,16 @@ test('Test accessing entries in-loop and outside should work', t => {
     t.is(inLoop[i].mode, outsideLoop[i].mode)
     t.deepEqual(inLoop[i].data, outsideLoop[i].data)
   }
+})
+
+test("Test extract's ignoreDotDir option", t => {
+  const archiveFile = fs.readFileSync(new URL('license.iso', import.meta.url))
+  let iter = extract(archiveFile, { ignoreDotDir: false })
+  let entry = iter.next().value
+  t.is(entry.path, '.')
+  t.is(entry.type, 'DIR')
+
+  iter = extract(archiveFile, { ignoreDotDir: true })
+  entry = iter.next().value
+  t.not(entry.path, '.')
 })

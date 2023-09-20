@@ -57,6 +57,13 @@ import { Pointer } from './wasm/pointer.mjs'
  */
 
 /**
+ * Options for {@link extract}
+ * @typedef {object} ExtractOpts
+ * @property {string} [passphrase] Passphrase to decrypt protect zip archives.
+ * @property {boolean} [ignoreDotDir=true] Ignore entries for '.' dir
+ */
+
+/**
  * @private
  * @type {boolean}
  */
@@ -70,17 +77,29 @@ export function disableWarning() {
 /**
  * Uncompress archive and iterate through all it's entries
  * @param {ArrayBufferLike} data Archive's data
- * @param {string} [passphrase] Passphrase to decrypt protect zip archives
+ * @param {string | ExtractOpts} [opts] Extract options, string value will be interpreted as password
  * @yields {Entry}
  * @returns {Generator.<Entry, void, void>} Generator that iterate through all of the archive's entries
  */
-export function* extract(data, passphrase) {
-  let offset = 0
+export function* extract(data, opts) {
+  let offset = -1
+  /** @type {string | undefined} */
+  let passphrase
+  let ignoreDotDir = true
+  if (opts) {
+    if (typeof opts === 'string') passphrase = opts
+    if (typeof opts === 'object') {
+      if (opts.passphrase) passphrase = opts.passphrase
+      if (opts.ignoreDotDir != null) ignoreDotDir = opts.ignoreDotDir
+    }
+  }
+
   const buffer = new Pointer().fill(data, true)
   const archive = openArchive(buffer, passphrase)
 
   try {
     while (true) {
+      offset++
       let pointer
 
       try {
@@ -118,6 +137,13 @@ export function* extract(data, passphrase) {
         },
       }
 
+      if (
+        ignoreDotDir &&
+        entry.path.substring(entry.path.lastIndexOf('/') + 1) === '.' &&
+        entry.type === 'DIR'
+      )
+        continue
+
       yield entry
 
       // If getter still exists that means the entry's data was not accessed.
@@ -149,8 +175,6 @@ export function* extract(data, passphrase) {
           },
         })
       }
-
-      offset++
     }
   } finally {
     closeArchive(archive)
@@ -168,11 +192,11 @@ export function* extract(data, passphrase) {
  *   LibArchive's streaming process model. If your goal is to process all
  *   entries and retrieve their content, `extractAll` is the recommended method.
  * @param {ArrayBufferLike} data Archive's data
- * @param {string} [passphrase] Passphrase to decrypt protect zip archives
+ * @param {string | ExtractOpts} [opts] Extract options, string value will be interpreted as password
  * @returns {Entry[]} List with all entries included in the archive
  */
-export function extractAll(data, passphrase) {
-  return Array.from(extract(data, passphrase), e => {
+export function extractAll(data, opts) {
+  return Array.from(extract(data, opts), e => {
     void e.data
     return e
   })
