@@ -197,6 +197,7 @@ export function* extract(data, opts) {
  */
 export function extractAll(data, opts) {
   return Array.from(extract(data, opts), e => {
+    // Touch entry's data to force it to load it into memory
     void e.data
     return e
   })

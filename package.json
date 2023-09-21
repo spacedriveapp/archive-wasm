@@ -41,6 +41,7 @@
     "postbuild:js": "npm run format",
     "prebuild": "npm run clean",
     "build": "conc -c auto --timings --kill-others-on-fail 'npm:build:*'",
+    "postbuild": "npm run format",
     "test": "test/setupAndRun.sh",
     "prebuildtest": "npm run build",
     "buildtest": "npm run test",
@@ -110,7 +111,8 @@
     "parser": "@babel/eslint-parser",
     "plugins": [
       "@babel",
-      "license-header"
+      "license-header",
+      "eslint-plugin-local-rules"
     ],
     "extends": [
       "eslint:recommended",
@@ -210,7 +212,16 @@
         ],
         "rules": {
           "jsdoc/require-returns": "off",
-          "jsdoc/require-yields-check": "off"
+          "jsdoc/require-yields-check": "off",
+          "local-rules/disallow-jsdoc-typedef": "error",
+          "padding-line-between-statements": [
+            "error",
+            {
+              "blankLine": "always",
+              "prev": "*",
+              "next": "export"
+            }
+          ]
         }
       },
       {
@@ -258,6 +269,7 @@
     "eslint-plugin-import": "^2.28.1",
     "eslint-plugin-jsdoc": "^46.8.1",
     "eslint-plugin-license-header": "^0.6.0",
+    "eslint-plugin-local-rules": "^2.0.0",
     "eslint-plugin-n": "^16.1.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-promise": "^6.1.1",
