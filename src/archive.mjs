@@ -139,7 +139,10 @@ export function* extract(data, opts) {
 
       if (
         ignoreDotDir &&
-        entry.path.substring(entry.path.lastIndexOf('/') + 1) === '.' &&
+        // poor's man path.dirname
+        entry.path
+          .substring(entry.path.lastIndexOf('/', entry.path.length - 2) + 1)
+          .replace('/', '') === '.' &&
         entry.type === 'DIR'
       )
         continue

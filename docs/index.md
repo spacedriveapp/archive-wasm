@@ -130,7 +130,6 @@ Utilities for extracting archives to disk using NodeJS's fs API
 
 ### fs.extractTo(data, out, [opts])
 Extract all supported archive entries inside a given path
-
 > Only files, directories, symlinks and hardlinks are supported.
   Any extra entry type, or invalid entry, in the archive will be skipped (with a warning printed to console)
   This function throws if it attempts to overwrite any existing file
@@ -153,6 +152,7 @@ Options for [extractTo](extractTo)
 
 | Name | Type | Description |
 | --- | --- | --- |
+| [chmod] | <code>number</code> | Permission flag to be AND'ed to all extracted entires permissions (The oposite of umask) |
 | [overwrite] | <code>boolean</code> | Allow overwriting files |
 
 <a name="archive-wasm/src/fs.module_mjs..ExtractToOpts"></a>

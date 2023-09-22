@@ -6,7 +6,7 @@
     "url": "https://github.com/spacedriveapp/archive-wasm/issues"
   },
   "author": "Vítor Vasconcellos",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18"
@@ -148,6 +148,20 @@
         }
       },
       {
+        "env": {
+          "node": false,
+          "es2022": true,
+          "shared-node-browser": true
+        },
+        "files": [
+          "src/**/*.mjs"
+        ],
+        "excludedFiles": [
+          "src/fs.mjs",
+          "src/wasm/libarchive.mjs"
+        ]
+      },
+      {
         "files": [
           "src/wasm/libarchive.mjs",
           "src/wasm/libarchive.d.mts"
@@ -257,7 +271,7 @@
     "@babel/eslint-parser": "^7.22.15",
     "@babel/eslint-plugin": "^7.22.10",
     "@babel/preset-env": "^7.22.15",
-    "@types/node": "^20.6.0",
+    "@types/node": "^20.6.3",
     "@typescript-eslint/eslint-plugin": "^6.7.2",
     "@typescript-eslint/parser": "^6.7.2",
     "ava": "^5.3.1",
