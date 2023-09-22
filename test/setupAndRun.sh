@@ -75,7 +75,7 @@ signal() {
     kill "-$1" "$2" 2>/dev/null
   fi
 
-  sleep 3
+  sleep 1
 
   if [ "$2" -gt 0 ]; then
     kill -KILL "$2" 2>/dev/null
@@ -92,3 +92,4 @@ _pid=$!
 trap 'signal INT "$_pid"' INT
 trap 'signal TERM "$_pid"' TERM
 wait "$_pid"
+signal INT

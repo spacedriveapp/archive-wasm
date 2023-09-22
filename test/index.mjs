@@ -91,12 +91,16 @@ for (let archive of [
     licenseCheck(t, archive, passphrase, false))
 }
 
-test('Test zip bomb', t => {
+test('Test recursive zip bomb', t => {
   // from: https://github.com/iamtraction/ZOD
   const archiveFile = fs.readFileSync(new URL('bomb.zip', import.meta.url))
-  t.throws(() => extractAll(archiveFile), {
-    instanceOf: ArchiveError,
-  })
+  t.notThrows(() => extractAll(archiveFile, '42'))
+})
+
+test('Test non recursive zip bomb', t => {
+  // https://www.bamsoftware.com/hacks/zipbomb/
+  const archiveFile = fs.readFileSync(new URL('bombNonRecursive.zip', import.meta.url))
+  t.notThrows(() => Array.from(extract(archiveFile)))
 })
 
 const IELPKTH_MD5 = {

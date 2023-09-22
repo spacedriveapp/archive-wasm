@@ -63,6 +63,8 @@ Feel free to send PRs and open issues.
 - Add browser tests
 - Add cpio, lha, ar, mtree tests
 - Handle extracting sparse entries
+- Add a entry size limit opts to extractAll as a counter-measure against zip bombs
+- Add a recursive opts to extract and implement recursive archival extraction
 
 ## License
 

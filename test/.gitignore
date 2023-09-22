@@ -2,4 +2,5 @@
 !*.sh
 !*.mjs
 !bomb.zip
+!bombNonRecursive.zip
 !.gitignore
