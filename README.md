@@ -1,6 +1,6 @@
 # Archive-Wasm
 
-**[LibArchive](https://libarchive.org/) compiled to WASM with an idiomatic JavaScript API for extracting most archive files**
+**[LibArchive](https://libarchive.org/) compiled to WASM with an idiomatic JavaScript API for extracting files from the most popular archive formats**
 
 > Inspired by [libarchivejs](https://github.com/nika-begiashvili/libarchivejs)
 
