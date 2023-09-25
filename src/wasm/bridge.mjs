@@ -18,7 +18,7 @@
 
 /**
  * @file Bridge between idiomatic Javascript API and the raw LibArchive WASM API
- * @module archive-wasm/wasm/bridge
+ * @module archive-wasm/wasm/bridge.mjs
  * @typicalname bridge
  */
 
@@ -37,6 +37,8 @@ import {
 } from './errors.mjs'
 import { wasm } from './libarchive.mjs'
 import { Pointer } from './pointer.mjs'
+
+/** @typedef {import('./pointer.mjs').Pointer} Pointer */
 
 /**
  * Get the message content of the last error that occured
@@ -82,7 +84,7 @@ const clearError = /** @type {clearErrorCb} */ (
  */
 function errorCheck(cb, checkReturn) {
   /**
-   * @param {import('./pointer.mjs').Pointer} archive = Pointer to archive struct
+   * @param {Pointer} archive = Pointer to archive struct
    * @param {unknown[]} args Other arguments
    * @returns {unknown} cb return value
    */
@@ -147,9 +149,9 @@ const _openArchive = /** @type {OpenArchiveCb} */ (
 /**
  * Open a compressed archive in memory
  * @private
- * @param {import('./pointer.mjs').Pointer} buffer Archive data
+ * @param {Pointer} buffer Archive data
  * @param {string} [passphrase] to decrypt archive data
- * @returns {import('./pointer.mjs').Pointer} Pointer to struct representing the opened archive
+ * @returns {Pointer} Pointer to struct representing the opened archive
  */
 export function openArchive(buffer, passphrase) {
   if (buffer.size == null || buffer.isNull())
@@ -178,8 +180,8 @@ export function openArchive(buffer, passphrase) {
  * struct archive_entry *get_next_entry(struct archive *archive);
  * @private
  * @callback GetNextEntryCb
- * @param {import('./pointer.mjs').Pointer} archive Pointer to archive struct
- * @returns {import('./pointer.mjs').Pointer} Pointer to struct representing an archive entry
+ * @param {Pointer} archive Pointer to archive struct
+ * @returns {Pointer} Pointer to struct representing an archive entry
  */
 
 /** @private  */
@@ -202,7 +204,7 @@ const _getFileData = /** @type {GetFileDataCb} */ (
 /**
  * Get the file data for the current entry of an archive
  * @private
- * @param {import('./pointer.mjs').Pointer} archive Pointer to archive struct
+ * @param {Pointer} archive Pointer to archive struct
  * @param {bigint} buffsize File size to be read, must be a value returned by {@link GetEntrySizeCb}
  * @returns {ArrayBufferLike} Pointer to file data in WASM HEAP
  */
@@ -242,10 +244,8 @@ export function getFileData(archive, buffsize) {
         throw new NullError('Failed to allocate memory for archive data')
 
       readLen = Number.parseInt(errorMsg)
-      if (Number.isNaN(readLen) || readLen < 0) {
-        fileDataPointer.free()
+      if (Number.isNaN(readLen) || readLen < 0)
         throw new FileReadError(ARCHIVE_ERRNO_MISC, 'Invalid size for archive data')
-      }
     } finally {
       if (!archive.isNull()) clearError(archive.raw)
     }
@@ -260,7 +260,7 @@ export function getFileData(archive, buffsize) {
  * int archive_read_free(struct archive * archive);
  * @private
  * @callback CloseArchiveCb
- * @param {import('./pointer.mjs').Pointer} archive Pointer to archive struct
+ * @param {Pointer} archive Pointer to archive struct
  */
 const _closeArchive = /** @type {CloseArchiveCb} */ (
   errorCheck(wasm.cwrap('archive_read_free', 'number', ['number']), true)
@@ -269,7 +269,7 @@ const _closeArchive = /** @type {CloseArchiveCb} */ (
 /**
  * Free archive pointer from memory
  * @private
- * @param {import('./pointer.mjs').Pointer} archive Pointer to archive struct
+ * @param {Pointer} archive Pointer to archive struct
  */
 export function closeArchive(archive) {
   try {
@@ -284,7 +284,7 @@ export function closeArchive(archive) {
  * la_int64_t archive_entry_size(struct archive_entry *archive);
  * @private
  * @callback GetEntrySizeCb
- * @param {import('./pointer.mjs').Pointer} entry Pointer to entry struct
+ * @param {Pointer} entry Pointer to entry struct
  * @returns {bigint} Current entry size to be used in {@link GetFileDataCb}
  */
 
@@ -298,7 +298,7 @@ export const getEntrySize = /** @type {GetEntrySizeCb} */ (
  * mode_t archive_entry_filetype(struct archive_entry *archive);
  * @private
  * @callback GetEntryModeCb
- * @param {import('./pointer.mjs').Pointer} entry Pointer to entry struct
+ * @param {Pointer} entry Pointer to entry struct
  * @returns {number} Current entry's st_mode
  */
 
@@ -311,7 +311,7 @@ export const getEntryMode = /** @type {GetEntryModeCb} */ (
  * time_t	 archive_entry_atime(struct archive_entry *archive);
  * @private
  * @callback GetEntryAtimeCb
- * @param {import('./pointer.mjs').Pointer} entry Pointer to entry struct
+ * @param {Pointer} entry Pointer to entry struct
  * @returns {bigint} Current entry atime
  */
 
@@ -324,7 +324,7 @@ export const getEntryAtime = /** @type {GetEntryAtimeCb} */ (
  * time_t archive_entry_ctime(struct archive_entry *archive)
  * @private
  * @callback GetEntryCtimeCb
- * @param {import('./pointer.mjs').Pointer} entry Pointer to entry struct
+ * @param {Pointer} entry Pointer to entry struct
  * @returns {bigint} Current entry ctime
  */
 
@@ -337,7 +337,7 @@ export const getEntryCtime = /** @type {GetEntryCtimeCb} */ (
  * time_t archive_entry_mtime(struct archive_entry *archive)
  * @private
  * @callback GetEntryMtimeCb
- * @param {import('./pointer.mjs').Pointer} entry Pointer to entry struct
+ * @param {Pointer} entry Pointer to entry struct
  * @returns {bigint} Current entry mtime
  */
 
@@ -350,7 +350,7 @@ export const getEntryMtime = /** @type {GetEntryMtimeCb} */ (
  * const char *archive_entry_symlink_utf8(struct archive_entry *entry)
  * @private
  * @callback GetEntrySymlinkCb
- * @param {import('./pointer.mjs').Pointer} entry Pointer to entry struct
+ * @param {Pointer} entry Pointer to entry struct
  * @returns {string} Current entry symlink path, empty string if entry is not a symlink
  */
 
@@ -363,7 +363,7 @@ export const getEntrySymlink = /** @type {GetEntrySymlinkCb} */ (
  * const char *archive_entry_hardlink_utf8(struct archive_entry *entry)
  * @private
  * @callback GetEntryHardlinkCb
- * @param {import('./pointer.mjs').Pointer} entry Pointer to entry struct
+ * @param {Pointer} entry Pointer to entry struct
  * @returns {string} Current entry hardlink path, empty string if entry is not a hardlink
  */
 
@@ -377,7 +377,7 @@ export const getEntryHardlink = /** @type {GetEntryHardlinkCb} */ (
  * const char * archive_entry_pathname_utf8(struct archive_entry *entry)
  * @private
  * @callback GetEntryNameCb
- * @param {import('./pointer.mjs').Pointer} entry Pointer to entry struct
+ * @param {Pointer} entry Pointer to entry struct
  * @returns {string} Current entry name
  */
 
@@ -390,7 +390,7 @@ export const getEntryPathName = /** @type {GetEntryNameCb} */ (
  * time_t archive_entry_birthtime(struct archive_entry *archive)
  * @private
  * @callback GetEntryBirthtimeCb
- * @param {import('./pointer.mjs').Pointer} entry Pointer to entry struct
+ * @param {Pointer} entry Pointer to entry struct
  * @returns {bigint} Current entry birthtime
  */
 

@@ -18,7 +18,7 @@
 
 /**
  * @file Constants and Enums used by the raw LibArchive API
- * @module archive-wasm/wasm/enums
+ * @module archive-wasm/wasm/enums.mjs
  * @typicalname enums
  */
 
@@ -61,7 +61,6 @@ export const ReturnCode = {
  * AE_IFDIR	 0040000
  * AE_IFIFO	 0010000
  * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_entry.h#L187-L193}
- * @private
  * @readonly
  * @enum {number}
  */

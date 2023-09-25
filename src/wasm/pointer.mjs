@@ -18,7 +18,7 @@
 
 /**
  * @file Manage raw C pointers semi-automatically
- * @module archive-wasm/wasm/pointer
+ * @module archive-wasm/wasm/pointer.mjs
  * @typicalname pointer
  */
 

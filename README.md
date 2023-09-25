@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Archive-Wasm provides a WebAssembly (WASM) version of [LibArchive](https://github.com/libarchive/libarchive/tree/v3.7.2) to be used in NodeJS and the Browser, alongside an idiomatic JS API, that allows you to effortlessly extract data from most archive formats.
+Archive-Wasm provides a WebAssembly (WASM) version of [LibArchive](https://github.com/libarchive/libarchive/tree/v3.7.2) to be used in NodeJS and Browsers through an idiomatic JS API, that allows you to effortlessly extract data from most of the popular archive formats.
 
 ## Installation
 

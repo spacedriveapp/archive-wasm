@@ -42,12 +42,17 @@ import { ENULL, NullError, FileReadError } from './wasm/errors.mjs'
 import { Pointer } from './wasm/pointer.mjs'
 
 /**
+ * File-type constants
+ * @typedef {import('./wasm/enums.mjs').EntryTypeName} EntryTypeName
+ */
+
+/**
  * A compressed data entry inside an archive
  * @typedef {object} Entry
  * @property {bigint} size Size of the entry in bytes.
  * @property {number} perm A bit-field describing the file type and mode.
  * @property {string} path Path of the entry within the archive.
- * @property {import('./wasm/enums.mjs').EntryTypeName?} type Indicates if the entry is a file, directory or something else
+ * @property {EntryTypeName?} type Indicates if the entry is a file, directory or something else
  * @property {string?} link path to actual resource in case this is a symlink or hardlink
  * @property {bigint} atime The timestamp indicating the last time this file was accessed expressed in nanoseconds since the POSIX Epoch.
  * @property {bigint} ctime The timestamp indicating the last time the file status was changed expressed in nanoseconds since the POSIX Epoch.

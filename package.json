@@ -33,7 +33,7 @@
     "prelint": "eslint ./src --ext .js,.ts,.mjs,.d.ts,.d.mts --cache",
     "lint": "tsc --noEmit --emitDeclarationOnly false",
     "preformat": "eslint . --ext .js,.ts,.mjs,.d.ts,.d.mts --cache --rule 'prettier/prettier: off' --max-warnings 0 --fix",
-    "format": "prettier --write --log-level=warn '**/*.{js,ts,mjs,json,d.ts,d.mts}'",
+    "format": "prettier --write --log-level=warn '**/*.{js,ts,mjs,json,d.ts,d.mts,md}'",
     "clean": "git clean -qfX ./src",
     "build:wasm": "./wasm/build.sh",
     "prebuild:js": "npm run prelint",

@@ -18,7 +18,7 @@
 
 /**
  * @file Error handling definitions
- * @module archive-wasm/wasm/errors
+ * @module archive-wasm/wasm/errors.mjs
  * @typicalname errors
  */
 
