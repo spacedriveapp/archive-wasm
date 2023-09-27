@@ -228,7 +228,9 @@ const _getFileData = /** @type {GetFileDataCb} */ (
  * @returns {Pointer} Pointer to file data in WASM HEAP
  */
 export function getFileData(archive, buffsize) {
-  if (archive.isNull() || buffsize === 0n) throw new NullError('Archive pointer is Pointer.NULL')
+  if (archive.isNull()) throw new NullError('Archive pointer is Pointer.NULL')
+
+  if (buffsize === 0n) return new Pointer()
 
   const size = Number(buffsize)
   if (size > Number.MAX_SAFE_INTEGER) {

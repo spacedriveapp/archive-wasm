@@ -137,7 +137,8 @@ export function* extract(data, opts) {
           birthtime: getEntryBirthtime(pointer),
 
           get data() {
-            const data = (fileData ?? getFileData($archive, entry.size)).read()
+            if (fileData == null) fileData = getFileData($archive, entry.size)
+            const data = fileData.isNull() ? new ArrayBuffer(0) : fileData.read()
             // Replace the getter with the actual value now that we got it
             Object.defineProperty(entry, 'data', { value: data })
             return data
