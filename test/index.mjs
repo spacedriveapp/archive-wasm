@@ -124,7 +124,7 @@ const GBK_PATHS = [
 test('Test GBK.zip', t => {
   // from: https://sourceforge.net/p/sevenzip/bugs/2198/
   const archiveFile = fs.readFileSync(new URL('GBK.zip', import.meta.url))
-  const names = Array.from(extract(archiveFile, { encoding: 'gbk' }), entry => entry.path)
+  const names = Array.from(extract(archiveFile, { encoding: 'gb18030' }), entry => entry.path)
   t.deepEqual(names, GBK_PATHS)
 })
 

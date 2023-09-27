@@ -30,7 +30,7 @@
   "description": "LibArchive compiled to WASM with a idiomatic JS api",
   "scripts": {
     "predocs": "npm run clean",
-    "docs": "typedoc --plugin typedoc-plugin-markdown --hideBreadcrumbs --hideInPageTOC --readme none --githubPages false",
+    "docs": "typedoc --plugin typedoc-plugin-markdown --hideBreadcrumbs --hideInPageTOC --readme none --githubPages false --disableSources",
     "prelint": "eslint ./src --ext .js,.ts,.mjs,.d.ts,.d.mts --cache",
     "lint": "tsc --noEmit --emitDeclarationOnly false",
     "preformat": "eslint . --ext .js,.ts,.mjs,.d.ts,.d.mts --cache --rule 'prettier/prettier: off' --max-warnings 0 --fix",
