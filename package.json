@@ -6,7 +6,7 @@
     "url": "https://github.com/spacedriveapp/archive-wasm/issues"
   },
   "author": "Vítor Vasconcellos",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18"
@@ -29,7 +29,8 @@
   },
   "description": "LibArchive compiled to WASM with a idiomatic JS api",
   "scripts": {
-    "docs": "npx jsdoc2md -c docs/jsdoc.conf.json src/*.mjs > docs/index.md",
+    "predocs": "npm run clean",
+    "docs": "typedoc --plugin typedoc-plugin-markdown --hideBreadcrumbs --hideInPageTOC --readme none --githubPages false",
     "prelint": "eslint ./src --ext .js,.ts,.mjs,.d.ts,.d.mts --cache",
     "lint": "tsc --noEmit --emitDeclarationOnly false",
     "preformat": "eslint . --ext .js,.ts,.mjs,.d.ts,.d.mts --cache --rule 'prettier/prettier: off' --max-warnings 0 --fix",
@@ -39,7 +40,7 @@
     "prebuild:js": "npm run prelint",
     "build:js": "tsc",
     "postbuild:js": "npm run format",
-    "prebuild": "npm run clean",
+    "prebuild": "npm run docs",
     "build": "conc -c auto --timings --kill-others-on-fail 'npm:build:*'",
     "postbuild": "npm run format",
     "test": "test/setupAndRun.sh",
@@ -267,30 +268,26 @@
     ]
   },
   "devDependencies": {
-    "@babel/core": "^7.22.19",
+    "@babel/core": "^7.23.0",
     "@babel/eslint-parser": "^7.22.15",
     "@babel/eslint-plugin": "^7.22.10",
-    "@babel/preset-env": "^7.22.15",
-    "@types/node": "^20.6.3",
-    "@typescript-eslint/eslint-plugin": "^6.7.2",
-    "@typescript-eslint/parser": "^6.7.2",
+    "@babel/preset-env": "^7.22.20",
+    "@types/node": "^20.7.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
     "ava": "^5.3.1",
     "clean-package": "^2.2.0",
     "concurrently": "^8.2.1",
-    "eslint": "^8.49.0",
+    "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-import": "^2.28.1",
-    "eslint-plugin-jsdoc": "^46.8.1",
+    "eslint-plugin-jsdoc": "^46.8.2",
     "eslint-plugin-license-header": "^0.6.0",
     "eslint-plugin-local-rules": "^2.0.0",
-    "eslint-plugin-n": "^16.1.0",
     "eslint-plugin-prettier": "^5.0.0",
-    "eslint-plugin-promise": "^6.1.1",
-    "jsdoc-plugin-intersection": "^1.0.4",
-    "jsdoc-to-markdown": "^8.0.0",
-    "jsdoc-tsimport-plugin": "^1.0.5",
     "prettier": "3.0.3",
+    "typedoc": "^0.25.1",
+    "typedoc-plugin-markdown": "^3.16.0",
     "typescript": "^5.2.2"
   }
 }

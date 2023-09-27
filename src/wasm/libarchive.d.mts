@@ -62,6 +62,13 @@ export const wasm: {
     argTypes: I,
     opts?: Emscripten.CCallOpts
   ): (...arg: ArgsToType<I>) => ReturnToType<R>
+  ccall<I extends Array<Emscripten.JSType | null> | [], R extends Emscripten.JSType | null>(
+    ident: string,
+    returnType: R,
+    argTypes: I,
+    args: ArgsToType<I>,
+    opts?: Emscripten.CCallOpts
+  ): ReturnToType<R>
   inspect(): string
   locateFile(url: string, scriptDirectory: string): string
 }

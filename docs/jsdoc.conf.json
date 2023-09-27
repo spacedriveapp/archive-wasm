@@ -1,6 +1,0 @@
-{
-  "source": {
-    "includePattern": ".+\\.(js(doc|x)?|mjs)$"
-  },
-  "plugins": ["jsdoc-tsimport-plugin", "jsdoc-plugin-intersection"]
-}

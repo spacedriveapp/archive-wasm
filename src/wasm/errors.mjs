@@ -19,22 +19,28 @@
 /**
  * @file Error handling definitions
  * @module archive-wasm/wasm/errors.mjs
- * @typicalname errors
  */
 
 /**
  * errno codes
  * Must be kept in sync with the definition in ../../wasm/wrapper.c
  */
+/* Archive requires password to be decrypted error. */
 export const EPASS = -37455
+/* Null pointer error */
 export const ENULL = -37456
+/* Unknown or unclassified error. */
 export const ARCHIVE_ERRNO_MISC = -1
+/* Unrecognized or invalid file format. */
+export const ARCHIVE_ERRNO_FILE_FORMAT = -2
+/* Illegal usage of the library. */
+export const ARCHIVE_ERRNO_PROGRAMMER_ERROR = -3
 
 export class ArchiveError extends Error {
   /**
    * Main error class
    * @param {number} code Error code
-   * @param {string} message Error message
+   * @param {string} [message] Error message
    */
   constructor(code, message) {
     super(message || 'Unknown error')
@@ -44,7 +50,7 @@ export class ArchiveError extends Error {
 }
 
 export class NullError extends ArchiveError {
-  /** @param {string} message Error message */
+  /** @param {string} [message] Error message */
   constructor(message) {
     super(ENULL, message || 'Unexpected Pointer.NULL')
   }
@@ -61,9 +67,16 @@ export class FileReadError extends ArchiveError {}
 export class PassphraseError extends ArchiveError {
   /**
    * @param {number} code Error code
-   * @param {string} message Error message
+   * @param {string} [message] Error message
    */
   constructor(code, message) {
     super(code, message || 'Passphrase required for this entry')
+  }
+}
+
+export class ExceedSizeLimitError extends ArchiveError {
+  /** @param {string} [message] Error message */
+  constructor(message) {
+    super(ARCHIVE_ERRNO_MISC, message || 'Archive exceeds the size limit')
   }
 }

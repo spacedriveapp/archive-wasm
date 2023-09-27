@@ -19,7 +19,6 @@
 /**
  * @file Constants and Enums used by the raw LibArchive API
  * @module archive-wasm/wasm/enums.mjs
- * @typicalname enums
  */
 
 /**
@@ -75,6 +74,14 @@ export const EntryType = {
 }
 
 /**
+ * Mapping for all possible entry types:
+ * - FILE
+ * - NAMED_PIPE
+ * - SOCKET
+ * - DIR
+ * - BLOCK_DEVICE
+ * - SYMBOLIC_LINK
+ * - CHARACTER_DEVIC
  * @readonly
  * @enum { 'FILE' | 'NAMED_PIPE' | 'SOCKET' | 'DIR' | 'BLOCK_DEVICE' | 'SYMBOLIC_LINK' | 'CHARACTER_DEVICE'}
  */

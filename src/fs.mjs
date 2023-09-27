@@ -19,25 +19,13 @@
 /**
  * @file Utilities for extracting archives to disk using NodeJS's fs API
  * @module archive-wasm/src/fs.mjs
- * @typicalname fs
  */
 
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import { extract, WARNING } from './archive.mjs'
-
-/**
- * Options for {@link extractTo}
- * @typedef {object} ExtractToExclusiveOpts
- * @property {number} [chmod] Permission flag to be AND'ed to all extracted entires permissions (The oposite of umask)
- * @property {boolean} [overwrite] Allow overwriting files
- */
-
-/**
- * Options for {@link extractTo}
- * @typedef {import("./archive.mjs").ExtractOpts & ExtractToExclusiveOpts} ExtractToOpts
- */
+import { extractAll } from './archive.mjs'
+import { WARNING } from './wasm/bridge.mjs'
 
 /**
  * Check if file not found error
@@ -142,6 +130,19 @@ async function writeFile(filePath, data, perm, atime, mtime, overwrite) {
 }
 
 /**
+ * Exclusive options for {@link extractTo}
+ * @typedef {object} ExtractToExclusiveOpts
+ * @property {number} [chmod] Permission flag to be AND'ed to all extracted entires permissions (The oposite of umask)
+ * @property {boolean} [overwrite] Allow overwriting files
+ * @property {bigint?} [sizeLimit] Limit the total byte size of data to be extracted to avoid memory exhaustion, null means no limit (default: 128MB)
+ */
+
+/**
+ * Options for {@link extractTo}
+ * @typedef {import("./archive.mjs").ExtractAllOpts & ExtractToExclusiveOpts} ExtractToOpts
+ */
+
+/**
  * Extract all supported archive entries inside a given path
  * > Only files, directories, symlinks and hardlinks are supported.
  *   Any extra entry type, or invalid entry, in the archive will be skipped (with a warning printed to console)
@@ -187,7 +188,12 @@ export async function extractTo(data, out, opts) {
    * @type {Array.<Parameters.<writeFile>>}
    */
   const opsWriteFile = []
-  for (const entry of extract(data, opts)) {
+  for (const entry of extractAll(data, opts)) {
+    if (entry.path == null) {
+      if (WARNING) console.warn('Ignoring empty path entry')
+      continue
+    }
+
     let entryPath = path.relative(out, path.resolve(out, entry.path))
     if (!entryPath || entryPath.startsWith('..') || path.isAbsolute(entryPath)) {
       if (WARNING)

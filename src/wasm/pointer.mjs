@@ -19,11 +19,20 @@
 /**
  * @file Manage raw C pointers semi-automatically
  * @module archive-wasm/wasm/pointer.mjs
- * @typicalname pointer
  */
 
 import { NullError } from './errors.mjs'
 import { wasm } from './libarchive.mjs'
+
+const fallbackEncodings = Object.entries({
+  cp1251: ['ru', 'uk', 'be', 'bg', 'sr', 'bs', 'mk'],
+  gb18030: ['zh'],
+  cseuckr: ['ko'],
+  csshiftjis: ['ja'],
+}).reduce((mapping, [encoding, languages]) => {
+  for (const language of languages) mapping[language] = encoding
+  return mapping
+}, /** @type {Record.<string, string>} */ ({}))
 
 /**
  * void * malloc(size_t size);
@@ -173,6 +182,45 @@ export class Pointer {
     }
 
     return wasm.HEAP_DATA_VIEW.buffer.slice(this.#pointer, this.#pointer + size)
+  }
+
+  /**
+   * Copy data from WASM memory and decode it as a string
+   * @param {string} [encoding] Decoder label
+   * @returns {string} String representation
+   */
+  readString(encoding) {
+    if (this.isNull()) return ''
+
+    let dataView = new Uint8Array(
+      wasm.HEAP_DATA_VIEW.buffer,
+      this.#pointer,
+      this.#size === 0 ? undefined : this.#size
+    )
+
+    let endPointer = -1
+    while ((dataView[++endPointer] ?? 0) !== 0);
+
+    if (endPointer === this.#pointer) return ''
+
+    dataView = dataView.slice(0, endPointer)
+
+    if (encoding) return new TextDecoder(encoding).decode(dataView)
+
+    try {
+      const lang = Intl.DateTimeFormat().resolvedOptions().locale.split('-')[0]
+      if (lang) {
+        const fallbackEncoding = fallbackEncodings[lang]
+        if (fallbackEncoding)
+          return new TextDecoder(fallbackEncoding, { fatal: true }).decode(dataView)
+      }
+    } catch {}
+
+    try {
+      return new TextDecoder('latin1', { fatal: true }).decode(dataView)
+    } catch {}
+
+    return new TextDecoder('utf8').decode(dataView)
   }
 
   /**

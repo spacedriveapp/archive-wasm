@@ -17,7 +17,21 @@ deps() {
 
 cleanup() {
   printf "\nDeleting test archives...\n" >&2
-  git clean -qfX -e '!IELPKTH.CAB' test
+  git clean -qfX -e '!IELPKTH.CAB' -e '!GBK.zip' test
+}
+
+download() {
+  if ! [ -s "test/${1}" ]; then
+    rm -rf "test/${1}"
+    if has wget; then
+      wget -O "test/${1}" "$2"
+    elif has curl; then
+      curl -LSso "test/${1}" "$2"
+    else
+      echo "Need either wget or curl to download ${1} test file" >&2
+      exit
+    fi
+  fi
 }
 
 # Remove temporary archivesq
@@ -30,17 +44,10 @@ deps 7zz zip pax npx lz4 gzip lzma lzop zstd bzip2 bsdtar xorrisofs
 cd "$(dirname "$0")/.."
 
 # Download Microsoft Tahoma font (Can't include in the repo due to license)
-if ! [ -s 'test/IELPKTH.CAB' ]; then
-  rm -rf test/IELPKTH.CAB
-  if has wget; then
-    wget -O test/IELPKTH.CAB 'https://master.dl.sourceforge.net/project/corefonts/OldFiles/IELPKTH.CAB'
-  elif has curl; then
-    curl -LSso test/IELPKTH.CAB 'https://master.dl.sourceforge.net/project/corefonts/OldFiles/IELPKTH.CAB'
-  else
-    echo "Need either wget or curl to download CAB file" >&2
-    exit
-  fi
-fi
+download IELPKTH.CAB 'https://master.dl.sourceforge.net/project/corefonts/OldFiles/IELPKTH.CAB'
+
+# Download GBK encoded zip
+download GBK.zip 'https://master.dl.sourceforge.net/project/corefonts/OldFiles/IELPKTH.CAB'
 
 # Disable macOS unsufferable ._* files being compressed and breaking tests
 export COPYFILE_DISABLE=1
@@ -65,7 +72,7 @@ bsdtar -cf test/license.tar.zst --zstd LICENSE.md PREAMBLE
 xorrisofs -quiet -J -R -V TEST -o test/license.iso -graft-points /LICENSE.md=LICENSE.md /PREAMBLE=PREAMBLE
 
 signal() {
-  set -- "${1:-INT}" "$2" "$(ps x -o "pid pgid" | awk -v pid="${2:-$$}" '$1 == pid { print $2 }')"
+  set -- "${1:-INT}" "${2:-0}" "$(ps x -o "pid pgid" | awk -v pid="${2:-$$}" '$1 == pid { print $2 }')"
 
   if [ "$3" -gt 0 ]; then
     # reset trap to avoid interrupt loop
@@ -87,9 +94,17 @@ signal() {
   fi
 }
 
-npx ava "$@" &
+npx -- ava "$@" &
 _pid=$!
 trap 'signal INT "$_pid"' INT
 trap 'signal TERM "$_pid"' TERM
 wait "$_pid"
-signal INT
+
+# Handle debug mode sometimes hanging after test is done
+while [ $# -gt 0 ]; do
+  if [ "$1" = 'debug' ]; then
+    signal INT
+    break
+  fi
+  shift
+done

@@ -30,6 +30,7 @@ import {
   FileReadError,
   PassphraseError,
   ArchiveError,
+  ExceedSizeLimitError,
 } from '../src/archive.mjs'
 import { FILETYPE_FLAG } from '../src/wasm/enums.mjs'
 
@@ -41,10 +42,10 @@ const licenseFileStat = fs.statSync(new URL('../LICENSE.md', import.meta.url), {
 const preambleFile = d.decode(fs.readFileSync(new URL('../PREAMBLE', import.meta.url)))
 const preambleFileStat = fs.statSync(new URL('../PREAMBLE', import.meta.url), { bigint: true })
 
-const licenseCheck = (t, archivePath, passphrase, mode) => {
+const licenseCheck = (t, archivePath, opts, mode) => {
   const archiveFile = fs.readFileSync(new URL(archivePath, import.meta.url))
 
-  let entries = extract(archiveFile, passphrase)
+  let entries = extract(archiveFile, opts)
   if (mode) entries = Array.from(entries)
 
   let i = 0
@@ -87,20 +88,44 @@ for (let archive of [
   if (Array.isArray(archive)) [archive, passphrase] = archive
   test(`Test ${archive} with out of loop access`, async t =>
     licenseCheck(t, archive, passphrase, true))
-  test(`Test ${archive} with in loop access`, async t =>
+  test(`Test ${archive} with out of loop access and recursive`, async t =>
+    licenseCheck(t, archive, { passphrase, recursive: true }, true))
+  test(`Test ${archive} with in-loop access`, async t =>
     licenseCheck(t, archive, passphrase, false))
+  test(`Test ${archive} with in-loop access and recursive`, async t =>
+    licenseCheck(t, archive, { passphrase, recursive: true }, false))
 }
 
 test('Test recursive zip bomb', t => {
   // from: https://github.com/iamtraction/ZOD
   const archiveFile = fs.readFileSync(new URL('bomb.zip', import.meta.url))
+  t.notThrows(() => Array.from(extract(archiveFile, '42')))
+  t.notThrows(() => Array.from(extract(archiveFile, { passphrase: '42', recursive: true })))
   t.notThrows(() => extractAll(archiveFile, '42'))
+  t.throws(() => extractAll(archiveFile, { passphrase: '42', recursive: true }), {
+    instanceOf: ExceedSizeLimitError,
+  })
 })
 
 test('Test non recursive zip bomb', t => {
   // https://www.bamsoftware.com/hacks/zipbomb/
   const archiveFile = fs.readFileSync(new URL('bombNonRecursive.zip', import.meta.url))
   t.notThrows(() => Array.from(extract(archiveFile)))
+  t.throws(() => extractAll(archiveFile), {
+    instanceOf: ExceedSizeLimitError,
+  })
+})
+
+const GBK_PATHS = [
+  'The.Wire.S01E04.Old Cases.720p.HDTV.x264-BATV.简体&英文(据HDTV.720p-BATV修改字体).srt',
+  'The.Wire.S01E04.Old Cases.720p.HDTV.x264-BATV.简体&英文(据HDTV.720p-BATV修改字体).ass',
+]
+
+test('Test GBK.zip', t => {
+  // from: https://sourceforge.net/p/sevenzip/bugs/2198/
+  const archiveFile = fs.readFileSync(new URL('GBK.zip', import.meta.url))
+  const names = Array.from(extract(archiveFile, { encoding: 'gbk' }), entry => entry.path)
+  t.deepEqual(names, GBK_PATHS)
 })
 
 const IELPKTH_MD5 = {

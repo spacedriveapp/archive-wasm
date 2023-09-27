@@ -194,6 +194,7 @@ COPY --from=bzip $SYSROOT $SYSROOT
 
 # Compile & install
 WORKDIR /src/_build
+ENV CFLAGS="$CFLAGS -DARCHIVE_ERRNO_PROGRAMMER_ERROR=-3 -DARCHIVE_ERRNO_FILE_FORMAT=-2 -DARCHIVE_ERRNO_MISC=-1"
 RUN emcmake cmake \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DBUILD_SHARED_LIBS=Off \
@@ -228,6 +229,7 @@ RUN emcmake cmake \
 	-DENABLE_ICONV=Off \
 	-DENABLE_TEST=Off \
 	-DPOSIX_REGEX_LIB=libc \
+	-DLIBARCHIVE_STATIC=1 \
 	..
 RUN emmake make -j$(nproc) 2>&1
 RUN emmake make install
@@ -267,11 +269,12 @@ RUN emcc ./wrapper.o \
 	-s EXPORT_ES6=1 \
 	-s INVOKE_RUN=0 \
 	-s MODULARIZE=1 \
+	-s TEXTDECODER=1 \
 	-s EXPORT_NAME=wasmFactory \
 	-s EXPORTED_FUNCTIONS=@/src/lib.exports \
 	-s EMIT_PRODUCERS_SECTION=1 \
 	-s EMIT_EMSCRIPTEN_LICENSE=1 \
-	-s EXPORTED_RUNTIME_METHODS=cwrap
+	-s EXPORTED_RUNTIME_METHODS=cwrap,ccall
 
 # --
 

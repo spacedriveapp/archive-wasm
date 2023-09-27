@@ -1,4 +1,8 @@
 {
+  "typedocOptions": {
+    "out": "docs",
+    "entryPoints": ["src/archive.mjs", "src/fs.mjs"]
+  },
   "compilerOptions": {
     "lib": ["esnext"],
     "outDir": "src",

@@ -3,13 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Illegal usage of the library. */
+#define	ARCHIVE_ERRNO_PROGRAMMER_ERROR (-3)
+/* Unrecognized or invalid file format. */
+#define	ARCHIVE_ERRNO_FILE_FORMAT (-2)
+/* Unknown or unclassified error. */
+#define	ARCHIVE_ERRNO_MISC (-1)
+
 #include <archive.h>
 #include <archive_entry.h>
-
-// https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_platform.h#L223-L225
-#ifndef ARCHIVE_ERRNO_MISC
-#define ARCHIVE_ERRNO_MISC (-1)
-#endif
 
 #define EPASS (-37455)
 

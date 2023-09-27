@@ -21,6 +21,8 @@ To use Archive-Wasm in your project, you can install it via npm:
 - Safari >= 15
 - Firefox >= 102
 
+> It is possible that this lib works fine with previous versions than the listed, however these will be the minimum versions that the lib will be tested against
+
 ## Usage
 
 Here's a simple example of extracting data from an archive using Archive-Wasm:
@@ -52,7 +54,7 @@ Only encrypted zip is supported in [LibArchive](https://github.com/libarchive/li
 
 ## API
 
-Check the [docs](./docs/index.md)
+Check the [docs](./docs)
 
 ## Contributing
 
@@ -63,8 +65,6 @@ Feel free to send PRs and open issues.
 - Add browser tests
 - Add cpio, lha, ar, mtree tests
 - Handle extracting sparse entries
-- Add a entry size limit opts to extractAll as a counter-measure against zip bombs
-- Add a recursive opts to extract and implement recursive archival extraction
 
 ## License
 

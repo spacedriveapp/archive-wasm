@@ -19,7 +19,6 @@
 /**
  * @file Bridge between idiomatic Javascript API and the raw LibArchive WASM API
  * @module archive-wasm/wasm/bridge.mjs
- * @typicalname bridge
  */
 
 import { ReturnCode } from './enums.mjs'
@@ -34,11 +33,23 @@ import {
   ArchiveError,
   FileReadError,
   NullError,
+  ARCHIVE_ERRNO_PROGRAMMER_ERROR,
 } from './errors.mjs'
 import { wasm } from './libarchive.mjs'
 import { Pointer } from './pointer.mjs'
 
-/** @typedef {import('./pointer.mjs').Pointer} Pointer */
+/**
+ * @private
+ * @type {boolean}
+ */
+export let WARNING = true
+
+/** Disable lib warnings */
+export function disableWarning() {
+  WARNING = false
+}
+
+const utf8Labels = new Set(['unicode-1-1-utf-8', 'utf-8', 'utf8'])
 
 /**
  * Get the message content of the last error that occured
@@ -96,11 +107,19 @@ function errorCheck(cb, checkReturn) {
 
     const errorMsg = getError(archive.raw) ?? 'Unknown error'
     const errorCode = getErrorCode(archive.raw)
+    if (WARNING && errorCode === ARCHIVE_ERRNO_PROGRAMMER_ERROR)
+      console.warn(
+        'LibArchive Programming Error occurred. ' +
+          'Please report this to https://github.com/spacedriveapp/archive-wasm/issues/new/choose' +
+          '\n%s: %s',
+        cb.name,
+        errorMsg
+      )
     try {
       if (checkReturn) {
         switch (returnCode) {
           case ReturnCode.WARN:
-            console.warn(`${cb.name}: ${errorMsg}`)
+            if (WARNING) console.warn(`${cb.name}: ${errorMsg}`)
           // eslint-disable-next-line no-fallthrough
           case ReturnCode.OK:
           case ReturnCode.EOF:
@@ -116,13 +135,13 @@ function errorCheck(cb, checkReturn) {
         }
       } else {
         if (errorCode !== 0) throw new ArchiveError(errorCode, errorMsg)
+
         if (checkReturn === null) {
-          if (returnCode === Pointer.NULL || returnCode === '') {
-            throw new NullError('Returned unexpected Pointer.NULL')
-          } else if (typeof returnCode === 'number') {
-            return new Pointer(0, returnCode)
-          }
+          const pointer = new Pointer(0, returnCode)
+          if (pointer.isNull()) throw new NullError('Returned unexpected Pointer.NULL')
+          return pointer
         }
+
         return returnCode
       }
     } finally {
@@ -206,12 +225,10 @@ const _getFileData = /** @type {GetFileDataCb} */ (
  * @private
  * @param {Pointer} archive Pointer to archive struct
  * @param {bigint} buffsize File size to be read, must be a value returned by {@link GetEntrySizeCb}
- * @returns {ArrayBufferLike} Pointer to file data in WASM HEAP
+ * @returns {Pointer} Pointer to file data in WASM HEAP
  */
 export function getFileData(archive, buffsize) {
-  if (archive.isNull()) throw new NullError('Archive pointer is Pointer.NULL')
-
-  if (buffsize === 0n) return new ArrayBuffer(0)
+  if (archive.isNull() || buffsize === 0n) throw new NullError('Archive pointer is Pointer.NULL')
 
   const size = Number(buffsize)
   if (size > Number.MAX_SAFE_INTEGER) {
@@ -222,38 +239,32 @@ export function getFileData(archive, buffsize) {
   }
 
   const fileDataPointer = new Pointer(size, _getFileData(archive.raw, size))
-  try {
-    let readLen, errorMsg, errorCode
-    if (archive.isNull()) {
-      errorMsg = 'Archive pointer is Pointer.NULL'
-      errorCode = ENULL
-    } else {
-      errorMsg = getError(archive.raw)
-      errorCode = getErrorCode(archive.raw)
-    }
-
-    try {
-      if (errorCode !== 0) {
-        throw errorCode === ARCHIVE_ERRNO_MISC &&
-          errorMsg.toLocaleLowerCase().includes('passphrase')
-          ? new PassphraseError(EPASS, errorMsg)
-          : new FileReadError(errorCode, errorMsg || 'Failed to read archive data')
-      }
-
-      if (fileDataPointer.isNull())
-        throw new NullError('Failed to allocate memory for archive data')
-
-      readLen = Number.parseInt(errorMsg)
-      if (Number.isNaN(readLen) || readLen < 0)
-        throw new FileReadError(ARCHIVE_ERRNO_MISC, 'Invalid size for archive data')
-    } finally {
-      if (!archive.isNull()) clearError(archive.raw)
-    }
-
-    return fileDataPointer.realloc(readLen, true).read()
-  } finally {
-    fileDataPointer.free()
+  let readLen, errorMsg, errorCode
+  if (archive.isNull()) {
+    errorMsg = 'Archive pointer is Pointer.NULL'
+    errorCode = ENULL
+  } else {
+    errorMsg = getError(archive.raw)
+    errorCode = getErrorCode(archive.raw)
   }
+
+  try {
+    if (errorCode !== 0) {
+      throw errorCode === ARCHIVE_ERRNO_MISC && errorMsg.toLocaleLowerCase().includes('passphrase')
+        ? new PassphraseError(EPASS, errorMsg)
+        : new FileReadError(errorCode, errorMsg || 'Failed to read archive data')
+    }
+
+    if (fileDataPointer.isNull()) throw new NullError('Failed to allocate memory for archive data')
+
+    readLen = Number.parseInt(errorMsg)
+    if (Number.isNaN(readLen) || readLen < 0)
+      throw new FileReadError(ARCHIVE_ERRNO_MISC, 'Invalid size for archive data')
+  } finally {
+    if (!archive.isNull()) clearError(archive.raw)
+  }
+
+  return fileDataPointer.realloc(readLen, true)
 }
 
 /**
@@ -347,46 +358,6 @@ export const getEntryMtime = /** @type {GetEntryMtimeCb} */ (
 )
 
 /**
- * const char *archive_entry_symlink_utf8(struct archive_entry *entry)
- * @private
- * @callback GetEntrySymlinkCb
- * @param {Pointer} entry Pointer to entry struct
- * @returns {string} Current entry symlink path, empty string if entry is not a symlink
- */
-
-/** @private */
-export const getEntrySymlink = /** @type {GetEntrySymlinkCb} */ (
-  errorCheck(wasm.cwrap('archive_entry_symlink_utf8', 'string', ['number']), false)
-)
-
-/**
- * const char *archive_entry_hardlink_utf8(struct archive_entry *entry)
- * @private
- * @callback GetEntryHardlinkCb
- * @param {Pointer} entry Pointer to entry struct
- * @returns {string} Current entry hardlink path, empty string if entry is not a hardlink
- */
-
-/** @private */
-export const getEntryHardlink = /** @type {GetEntryHardlinkCb} */ (
-  errorCheck(wasm.cwrap('archive_entry_hardlink_utf8', 'string', ['number']), false)
-)
-
-/**
- * Get the name of the current entry of an archive
- * const char * archive_entry_pathname_utf8(struct archive_entry *entry)
- * @private
- * @callback GetEntryNameCb
- * @param {Pointer} entry Pointer to entry struct
- * @returns {string} Current entry name
- */
-
-/** @private */
-export const getEntryPathName = /** @type {GetEntryNameCb} */ (
-  errorCheck(wasm.cwrap('archive_entry_pathname_utf8', 'string', ['number']), null)
-)
-
-/**
  * time_t archive_entry_birthtime(struct archive_entry *archive)
  * @private
  * @callback GetEntryBirthtimeCb
@@ -398,3 +369,39 @@ export const getEntryPathName = /** @type {GetEntryNameCb} */ (
 export const getEntryBirthtime = /** @type {GetEntryBirthtimeCb} */ (
   errorCheck(wasm.cwrap('archive_entry_birthtime', 'number', ['number']), false)
 )
+
+/**
+ * @private
+ * @callback GetEntryStringValueCb
+ * @param {Pointer} entry Pointer to entry struct
+ * @param {string} [encoding] Label for decoding the string value. Default is utf8
+ * @returns {string?} Entry string value
+ */
+
+/**
+ * Wrap C function to get entry string value
+ * @param {string} cFuncName Name of the function to get the value
+ * @returns {GetEntryStringValueCb} Wrapped function
+ */
+function wrapGetEntryStringValue(cFuncName) {
+  return (entry, encoding) => {
+    let value = null
+
+    if (encoding == null || utf8Labels.has(encoding))
+      value = wasm.ccall(`${cFuncName}_utf8`, 'string', ['number'], [entry.raw])
+
+    if (!value) {
+      const pointer = new Pointer(
+        0,
+        /** @type {number} */ (wasm.ccall(cFuncName, 'number', ['number'], [entry.raw]))
+      )
+      if (!pointer.isNull()) value = pointer.readString(encoding)
+    }
+
+    return value || null
+  }
+}
+
+export const getEntrySymlink = wrapGetEntryStringValue('archive_entry_symlink')
+export const getEntryHardlink = wrapGetEntryStringValue('archive_entry_hardlink')
+export const getEntryPathName = wrapGetEntryStringValue('archive_entry_pathname')
