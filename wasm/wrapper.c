@@ -4,11 +4,11 @@
 #include <string.h>
 
 /* Illegal usage of the library. */
-#define	ARCHIVE_ERRNO_PROGRAMMER_ERROR (-3)
+#define ARCHIVE_ERRNO_PROGRAMMER_ERROR (-3)
 /* Unrecognized or invalid file format. */
-#define	ARCHIVE_ERRNO_FILE_FORMAT (-2)
+#define ARCHIVE_ERRNO_FILE_FORMAT (-2)
 /* Unknown or unclassified error. */
-#define	ARCHIVE_ERRNO_MISC (-1)
+#define ARCHIVE_ERRNO_MISC (-1)
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -16,6 +16,84 @@
 #define EPASS (-37455)
 
 #define empty_str(str) (str == NULL || str[0] == '\0')
+
+// https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_support_format_all.c#L81-L88
+void support_format(struct archive *a) {
+  /*
+   * These bidders are all pretty cheap; they just examine a
+   * small initial part of the archive.  If one of these bids
+   * high, we can maybe avoid running any of the more expensive
+   * bidders below.
+   */
+  archive_read_support_format_ar(a);
+  archive_read_support_format_cpio(a);
+  archive_read_support_format_empty(a);
+  archive_read_support_format_lha(a);
+  archive_read_support_format_tar(a);
+  archive_read_support_format_xar(a);
+  archive_read_support_format_warc(a);
+
+  /*
+   * Install expensive bidders last.  By doing them last, we
+   * increase the chance that a high bid from someone else will
+   * make it unnecessary for these to do anything at all.
+   */
+  /* These three have potentially large look-ahead. */
+  archive_read_support_format_7zip(a);
+  archive_read_support_format_cab(a);
+  archive_read_support_format_rar(a);
+  archive_read_support_format_rar5(a);
+  archive_read_support_format_iso9660(a);
+  /* Seek is really bad, since it forces the read-ahead
+   * logic to discard buffered data. */
+  archive_read_support_format_zip(a);
+
+  /* Note: We always return ARCHIVE_OK here, even if some of the
+   * above return ARCHIVE_WARN.  The intent here is to enable
+   * "as much as possible."  Clients who need specific
+   * compression should enable those individually so they can
+   * verify the level of support. */
+  /* Clear any warning messages set by the above functions. */
+  archive_clear_error(a);
+}
+
+// https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_support_filter_all.c#L77-L84
+void support_filter(struct archive *a) {
+
+  /* Bzip falls back to "bunzip2" command-line */
+  archive_read_support_filter_bzip2(a);
+  /* The decompress code doesn't use an outside library. */
+  archive_read_support_filter_compress(a);
+  /* Gzip decompress falls back to "gzip -d" command-line. */
+  archive_read_support_filter_gzip(a);
+  /* Lzip falls back to "unlzip" command-line program. */
+  archive_read_support_filter_lzip(a);
+  /* The LZMA file format has a very weak signature, so it
+   * may not be feasible to keep this here, but we'll try.
+   * This will come back out if there are problems. */
+  /* Lzma falls back to "unlzma" command-line program. */
+  archive_read_support_filter_lzma(a);
+  /* Xz falls back to "unxz" command-line program. */
+  archive_read_support_filter_xz(a);
+  /* The decode code doesn't use an outside library. */
+  archive_read_support_filter_uu(a);
+  /* The decode code doesn't use an outside library. */
+  archive_read_support_filter_rpm(a);
+  /* Lzop decompress falls back to "lzop -d" command-line. */
+  archive_read_support_filter_lzop(a);
+  /* Lz4 falls back to "lz4 -d" command-line program. */
+  archive_read_support_filter_lz4(a);
+  /* Zstd falls back to "zstd -d" command-line program. */
+  archive_read_support_filter_zstd(a);
+
+  /* Note: We always return ARCHIVE_OK here, even if some of the
+   * above return ARCHIVE_WARN.  The intent here is to enable
+   * "as much as possible."  Clients who need specific
+   * compression should enable those individually so they can
+   * verify the level of support. */
+  /* Clear any warning messages set by the above functions. */
+  archive_clear_error(a);
+}
 
 struct archive *open_archive(const void *buf, size_t size,
                              const char *passphrase) {
@@ -25,17 +103,8 @@ struct archive *open_archive(const void *buf, size_t size,
     return NULL;
   }
 
-  /**
-   * Always returns ARCHIVE_OK
-   * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_support_filter_all.c#L77-L84
-   */
-  archive_read_support_filter_all(archive);
-
-  /**
-   * Always returns ARCHIVE_OK
-   * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_support_format_all.c#L81-L88
-   */
-  archive_read_support_format_all(archive);
+  support_filter(archive);
+  support_format(archive);
 
   if (empty_str(passphrase)) {
     if (archive_read_has_encrypted_entries(archive) == 1) {
@@ -69,7 +138,7 @@ struct archive *open_archive(const void *buf, size_t size,
   if (code != ARCHIVE_OK) {
     if (code == ARCHIVE_WARN) {
       const char *error = archive_error_string(archive);
-      fprintf(stderr, "LibArchive.openArchive: %s",
+      fprintf(stderr, "LibArchive.openArchive: %s\n",
               error == NULL ? "Unknown warning" : error);
       archive_clear_error(archive);
     } else {
@@ -102,7 +171,7 @@ struct archive_entry *get_next_entry(struct archive *archive) {
 
   if (code == ARCHIVE_WARN) {
     const char *error = archive_error_string(archive);
-    fprintf(stderr, "LibArchive.getNextEntry: %s",
+    fprintf(stderr, "LibArchive.getNextEntry: %s\n",
             error == NULL ? "Unknown warning" : error);
     archive_clear_error(archive);
   } else if (code == ARCHIVE_EOF) {

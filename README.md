@@ -43,9 +43,9 @@ for (const entry of extract(archiveData)) {
 
 ## Supported Archives Types
 
-Archive-Wasm supports the same archive formats as the full version of [LibArchive](https://libarchive.org/), with the exception of the xar format and grzip/lrzip compressions:
+Archive-Wasm supports the same archive formats as the full version of [LibArchive](https://libarchive.org/), with the exception of the xar and mtree formats and grzip and lrzip compressions:
 
-- Reads a variety of formats, including 7z, tar, pax, cpio, zip, lha, ar, cab, mtree, rar, and ISO images.
+- Reads a variety of formats, including 7z, tar, pax, cpio, zip, lha, ar, cab, rar, and ISO images.
 - Automatically handles archives compressed with compress, bzip2, gzip, lz4, lzip, lzop, lzma/xz, zstd.
 
 ### Encrypted formats
@@ -63,7 +63,7 @@ Feel free to send PRs and open issues.
 ## TODO
 
 - Add browser tests
-- Add cpio, lha, ar, mtree tests
+- Add cpio, lha, ar tests
 - Handle extracting sparse entries
 
 ## License

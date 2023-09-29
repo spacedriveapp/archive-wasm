@@ -41,6 +41,8 @@ const licenseFile = d.decode(fs.readFileSync(new URL('../LICENSE.md', import.met
 const licenseFileStat = fs.statSync(new URL('../LICENSE.md', import.meta.url), { bigint: true })
 const preambleFile = d.decode(fs.readFileSync(new URL('../PREAMBLE', import.meta.url)))
 const preambleFileStat = fs.statSync(new URL('../PREAMBLE', import.meta.url), { bigint: true })
+const gitignoreFile = d.decode(fs.readFileSync(new URL('../.gitignore', import.meta.url)))
+const gitignoreFileStat = fs.statSync(new URL('../.gitignore', import.meta.url), { bigint: true })
 
 const licenseCheck = (t, archivePath, opts, mode) => {
   const archiveFile = fs.readFileSync(new URL(archivePath, import.meta.url))
@@ -67,6 +69,35 @@ const licenseCheck = (t, archivePath, opts, mode) => {
     t.true(entry.birthtime >= 0n)
     i++
   }
+
+  t.true((mode ? entries[i] : entries.next().value) == null)
+}
+
+const gitignoreCheck = (t, archivePath, opts, mode) => {
+  const archiveFile = fs.readFileSync(new URL(archivePath, import.meta.url))
+
+  let entries = extract(archiveFile, opts)
+  if (mode) entries = Array.from(entries)
+
+  let i = 0
+
+  let entry = mode ? entries[i++] : entries.next().value
+  t.false(entry == null)
+  t.is(entry.path, '.gitignore')
+  t.is(entry.size, gitignoreFileStat.size)
+  t.is(entry.perm, ~FILETYPE_FLAG & Number(gitignoreFileStat.mode))
+  t.is(entry.type, 'FILE')
+  t.is(entry.link, null)
+  t.is(d.decode(entry.data), gitignoreFile)
+
+  entry = mode ? entries[i++] : entries.next().value
+  t.false(entry == null)
+  t.is(entry.path, '.prettierignore')
+  t.is(entry.type, 'SYMBOLIC_LINK')
+  t.is(entry.link, '.gitignore')
+  t.is(entry.data.byteLength, 0)
+
+  t.true((mode ? entries[i] : entries.next().value) == null)
 }
 
 for (let archive of [
@@ -94,6 +125,34 @@ for (let archive of [
     licenseCheck(t, archive, passphrase, false))
   test(`Test ${archive} with in-loop access and recursive`, async t =>
     licenseCheck(t, archive, { passphrase, recursive: true }, false))
+}
+
+for (let archive of [
+  'gitignore.7z',
+  'gitignore.rar',
+  'gitignore.tgz',
+  'gitignore.tlz',
+  'gitignore.tzo',
+  'gitignore.zip',
+  'gitignore.iso',
+  'gitignore.pax',
+  'gitignore.pax.Z',
+  'gitignore.tbz2',
+  'gitignore.tar.zst',
+  'gitignore.tar.lz4',
+  // https://github.com/libarchive/libarchive/issues/1984
+  // ['gitignore.encrypted.zip', '12345678'],
+]) {
+  let passphrase
+  if (Array.isArray(archive)) [archive, passphrase] = archive
+  test(`Test ${archive} with out of loop access`, async t =>
+    gitignoreCheck(t, archive, passphrase, true))
+  test(`Test ${archive} with out of loop access and recursive`, async t =>
+    gitignoreCheck(t, archive, { passphrase, recursive: true }, true))
+  test(`Test ${archive} with in-loop access`, async t =>
+    gitignoreCheck(t, archive, passphrase, false))
+  test(`Test ${archive} with in-loop access and recursive`, async t =>
+    gitignoreCheck(t, archive, { passphrase, recursive: true }, false))
 }
 
 test('Test recursive zip bomb', t => {

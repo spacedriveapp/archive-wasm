@@ -34,6 +34,28 @@ download() {
   fi
 }
 
+compress() {
+  _name="$1"
+  shift
+
+  rar a "${_name}.rar" -ol -idq "$@"
+  rar a "${_name}.ecrypted.rar" -p12345678 -ol -idq "$@"
+  rar a "${_name}.hecrypted.rar" -hp12345678 -ol -idq "$@"
+  7zz a -snl "${_name}.7z" "$@" >/dev/null
+  7zz a -snl "${_name}.encrypted.7z" -p12345678 "$@" >/dev/null
+  zip -q "${_name}.zip" --symlinks "$@"
+  zip -q "${_name}.encrypted.zip" --symlinks -P12345678 "$@"
+  pax -wf "${_name}.pax" "$@"
+  pax -wzf "${_name}.pax.Z" "$@"
+  bsdtar -cf "${_name}.tgz" --gzip "$@"
+  bsdtar -cf "${_name}.tlz" --lzma "$@"
+  bsdtar -cf "${_name}.tzo" --lzop "$@"
+  bsdtar -cf "${_name}.tbz2" --bzip2 "$@"
+  bsdtar -cf "${_name}.tar.lz4" --lz4 "$@"
+  bsdtar -cf "${_name}.tar.zst" --zstd "$@"
+  xorrisofs -R -V TEST -o "${_name}.iso" "$@"
+}
+
 # Remove temporary archivesq
 trap 'cleanup' EXIT
 
@@ -43,33 +65,19 @@ deps 7zz zip pax npx lz4 gzip lzma lzop zstd bzip2 bsdtar xorrisofs
 # Go to project root
 cd "$(dirname "$0")/.."
 
-# Download Microsoft Tahoma font (Can't include in the repo due to license)
+echo "Downloading test archives..." >&2
+# Download Microsoft Tahoma font (https://learn.microsoft.com/en-us/typography/font-list/tahoma, Can't include in the repo due to license)
 download IELPKTH.CAB 'https://master.dl.sourceforge.net/project/corefonts/OldFiles/IELPKTH.CAB'
-
-# Download GBK encoded zip
-download GBK.zip 'https://master.dl.sourceforge.net/project/corefonts/OldFiles/IELPKTH.CAB'
+# Download GBK encoded zip (https://sourceforge.net/p/sevenzip/bugs/2198, not including in the repo because I am not sure about the precedence of the files)
+download GBK.zip 'https://sourceforge.net/p/sevenzip/bugs/2198/attachment/sample.zip'
 
 # Disable macOS unsufferable ._* files being compressed and breaking tests
 export COPYFILE_DISABLE=1
 
 # Create test archives
 echo "Creating test archives..." >&2
-rar a test/license.rar LICENSE.md PREAMBLE -idq
-rar a test/license.ecrypted.rar -p12345678 -idq
-rar a test/license.hecrypted.rar LICENSE.md PREAMBLE -hp12345678 -idq
-7zz a test/license.7z LICENSE.md PREAMBLE >/dev/null
-7zz a test/license.encrypted.7z LICENSE.md PREAMBLE -p12345678 >/dev/null
-zip -q test/license.zip LICENSE.md PREAMBLE
-zip -q test/license.encrypted.zip LICENSE.md PREAMBLE -P12345678
-pax -wf test/license.pax LICENSE.md PREAMBLE
-pax -wzf test/license.pax.Z LICENSE.md PREAMBLE
-bsdtar -cf test/license.tgz --gzip LICENSE.md PREAMBLE
-bsdtar -cf test/license.tlz --lzma LICENSE.md PREAMBLE
-bsdtar -cf test/license.tzo --lzop LICENSE.md PREAMBLE
-bsdtar -cf test/license.tbz2 --bzip2 LICENSE.md PREAMBLE
-bsdtar -cf test/license.tar.lz4 --lz4 LICENSE.md PREAMBLE
-bsdtar -cf test/license.tar.zst --zstd LICENSE.md PREAMBLE
-xorrisofs -quiet -J -R -V TEST -o test/license.iso -graft-points /LICENSE.md=LICENSE.md /PREAMBLE=PREAMBLE
+compress test/license LICENSE.md PREAMBLE
+compress test/gitignore .gitignore .prettierignore
 
 signal() {
   set -- "${1:-INT}" "${2:-0}" "$(ps x -o "pid pgid" | awk -v pid="${2:-$$}" '$1 == pid { print $2 }')"
