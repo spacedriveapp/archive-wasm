@@ -2,7 +2,7 @@
 
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
-FROM emscripten/emsdk:3.1.46 as base
+FROM docker.io/emscripten/emsdk:3.1.46 as base
 
 SHELL ["/bin/bash", "-euxc"]
 

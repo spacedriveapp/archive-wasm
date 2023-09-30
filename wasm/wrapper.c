@@ -18,19 +18,22 @@
 #define empty_str(str) (str == NULL || str[0] == '\0')
 
 // https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_support_format_all.c#L81-L88
-void support_format(struct archive *a) {
+void support_format(struct archive *a, int recursive) {
   /*
    * These bidders are all pretty cheap; they just examine a
    * small initial part of the archive.  If one of these bids
    * high, we can maybe avoid running any of the more expensive
    * bidders below.
    */
-  archive_read_support_format_ar(a);
+  if (recursive == 0)
+    archive_read_support_format_ar(a);
   archive_read_support_format_cpio(a);
-  archive_read_support_format_empty(a);
+  if (recursive == 0)
+    archive_read_support_format_empty(a);
   archive_read_support_format_lha(a);
+  if (recursive == 0)
+    archive_read_support_format_mtree(a);
   archive_read_support_format_tar(a);
-  archive_read_support_format_xar(a);
   archive_read_support_format_warc(a);
 
   /*
@@ -40,7 +43,8 @@ void support_format(struct archive *a) {
    */
   /* These three have potentially large look-ahead. */
   archive_read_support_format_7zip(a);
-  archive_read_support_format_cab(a);
+  if (recursive == 0)
+    archive_read_support_format_cab(a);
   archive_read_support_format_rar(a);
   archive_read_support_format_rar5(a);
   archive_read_support_format_iso9660(a);
@@ -96,7 +100,7 @@ void support_filter(struct archive *a) {
 }
 
 struct archive *open_archive(const void *buf, size_t size,
-                             const char *passphrase) {
+                             const char *passphrase, int recursive) {
   // https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read.c#L88-L108
   struct archive *archive = archive_read_new();
   if (archive == NULL) {
@@ -104,7 +108,7 @@ struct archive *open_archive(const void *buf, size_t size,
   }
 
   support_filter(archive);
-  support_format(archive);
+  support_format(archive, recursive);
 
   if (empty_str(passphrase)) {
     if (archive_read_has_encrypted_entries(archive) == 1) {

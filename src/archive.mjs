@@ -164,7 +164,7 @@ export function* extract(data, opts) {
           if (!(fileData == null || fileData.isNull())) {
             let innerArchive
             try {
-              innerArchive = openArchive(fileData)
+              innerArchive = openArchive(fileData, undefined, true)
               archives.push(archive)
               archive = innerArchive
               continue

@@ -4,7 +4,7 @@
     "entryPoints": ["src/archive.mjs", "src/fs.mjs"]
   },
   "compilerOptions": {
-    "lib": ["esnext"],
+    "lib": ["ES2023"],
     "outDir": "src",
     "strict": true,
     "checkJs": true,

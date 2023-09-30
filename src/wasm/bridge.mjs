@@ -159,26 +159,38 @@ function errorCheck(cb, checkReturn) {
  * @param {number} buf Pointer to archive data buffer
  * @param {number} size Size of archive data buffer
  * @param {string} passphrase Password to decrypt archive data
+ * @param {boolean} recursive recursively open archives inside archives
  * @returns {number} Pointer to struct representing the opened archive
  */
 const _openArchive = /** @type {OpenArchiveCb} */ (
-  wasm.cwrap('open_archive', 'number', ['number', 'number', 'string'])
+  wasm.cwrap('open_archive', 'number', ['number', 'number', 'string', 'boolean'])
 )
+
+/**
+ * Keep reference to opened archives buffer pointer to avoid GC from freeing them
+ * @private
+ * @type {WeakMap<Pointer, Pointer>}
+ */
+const _openArchiveBuffMap = new WeakMap()
 
 /**
  * Open a compressed archive in memory
  * @private
  * @param {Pointer} buffer Archive data
  * @param {string} [passphrase] to decrypt archive data
+ * @param {boolean} [recursive] recursively open archives inside archives
  * @returns {Pointer} Pointer to struct representing the opened archive
  */
-export function openArchive(buffer, passphrase) {
+export function openArchive(buffer, passphrase, recursive) {
   if (buffer.size == null || buffer.isNull())
     throw new NullError("Archive data must be a malloc'd buffer, not NULL or externally managed")
 
   if (passphrase == null) passphrase = ''
 
-  const archive = new Pointer(0, _openArchive(buffer.raw, buffer.size, passphrase))
+  const archive = new Pointer(
+    0,
+    _openArchive(buffer.raw, buffer.size, passphrase, recursive || false)
+  )
   if (archive.isNull()) throw new NullError('Failed to allocate memory')
 
   const errorCode = getErrorCode(archive.raw)
@@ -190,6 +202,8 @@ export function openArchive(buffer, passphrase) {
 
     throw new (errorCode === EPASS ? PassphraseError : ArchiveError)(errorCode, errorMsg)
   }
+
+  _openArchiveBuffMap.set(archive, buffer)
 
   return archive
 }
@@ -288,6 +302,7 @@ export function closeArchive(archive) {
   try {
     _closeArchive(archive)
   } finally {
+    _openArchiveBuffMap.delete(archive)
     archive.free()
   }
 }

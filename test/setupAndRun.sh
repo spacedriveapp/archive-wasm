@@ -53,14 +53,15 @@ compress() {
   bsdtar -cf "${_name}.tbz2" --bzip2 "$@"
   bsdtar -cf "${_name}.tar.lz4" --lz4 "$@"
   bsdtar -cf "${_name}.tar.zst" --zstd "$@"
-  xorrisofs -R -V TEST -o "${_name}.iso" "$@"
+  xorrisofs -quiet -R -V TEST -o "${_name}.iso" "$@"
 }
 
 # Remove temporary archivesq
 trap 'cleanup' EXIT
 
 # Check if system has all the dependencies requires to run tests
-deps 7zz zip pax npx lz4 gzip lzma lzop zstd bzip2 bsdtar xorrisofs
+# yay -Sy --needed rar 7-zip zip pax lz4 gzip xz lzop zstd bzip2 libarchive libisoburn
+deps rar 7zz zip pax npx lz4 gzip lzma lzop zstd bzip2 bsdtar xorrisofs
 
 # Go to project root
 cd "$(dirname "$0")/.."
