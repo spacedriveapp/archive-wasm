@@ -31,7 +31,9 @@ Here's a simple example of extracting data from an archive using Archive-Wasm:
 import { extract, getEntryType } from 'archive-wasm'
 
 // Load your archive data as an ArrayBuffer or any compatible Buffer type.
-const archiveData = new Uint8Array([/* Archive Data */])
+const archiveData = new Uint8Array([
+  /* Archive Data */
+])
 
 for (const entry of extract(archiveData)) {
   if (getEntryType(entry) === 'FILE' && entry.path.endsWith('lyrics.txt')) {
