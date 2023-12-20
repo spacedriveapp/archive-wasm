@@ -12,13 +12,17 @@
 
 ### constructor
 
-• **new ExceedSizeLimitError**(`message?`)
+• **new ExceedSizeLimitError**(`message?`): [`ExceedSizeLimitError`](archive_wasm.ExceedSizeLimitError.md)
 
 #### Parameters
 
 | Name       | Type     | Description   |
 | :--------- | :------- | :------------ |
 | `message?` | `string` | Error message |
+
+#### Returns
+
+[`ExceedSizeLimitError`](archive_wasm.ExceedSizeLimitError.md)
 
 #### Overrides
 
@@ -119,7 +123,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 ### captureStackTrace
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

@@ -1,4 +1,4 @@
-# Interface: ExtractToExclusiveOpts<\>
+# Interface: ExtractToExclusiveOpts\<\>
 
 [archive-wasm/src/fs.mjs](../modules/archive_wasm_src_fs_mjs.md).ExtractToExclusiveOpts
 

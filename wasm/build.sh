@@ -20,7 +20,11 @@ fi
 _dist="$(CDPATH='' cd "${__dir}/../src" && pwd)"
 mkdir -p "$_dist"
 
-$_manager build "$__dir" --jobs 4 --tag archive-wasm:latest
+if [ "$_manager" = 'podman' ]; then
+  $_manager build "$__dir" --jobs 4 --tag archive-wasm:latest --security-opt label=disable --network host --format docker
+else
+  $_manager build "$__dir" --jobs 4 --tag archive-wasm:latest
+fi
 
 _id="$($_manager create archive-wasm:latest true)"
 $_manager cp "$_id:/wasm" "${_dist}/"

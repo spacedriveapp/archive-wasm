@@ -2,7 +2,7 @@
 
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
-FROM docker.io/emscripten/emsdk:3.1.46 as base
+FROM docker.io/emscripten/emsdk:3.1.51 as base
 
 SHELL ["/bin/bash", "-euxc"]
 
@@ -12,7 +12,9 @@ RUN apt-get update -y && apt-get install -y pkg-config
 COPY settings.sh /settings.sh
 RUN /settings.sh
 
-ENV CFLAGS='-r -Oz -flto -fpic -fwasm-exceptions --minify=0 --closure=0 --no-entry'
+ENV FFLAGS="-fasynchronous-unwind-tables -fexceptions"
+ENV CFLAGS="-Oz -flto -fwasm-exceptions --minify=0 --closure=0 --no-entry -pipe -Wall -Werror=format-security ${FFLAGS}"
+ENV LDFLAGS="-pipe ${FFLAGS}"
 ENV CXXFLAGS="$CFLAGS"
 
 WORKDIR /src
@@ -22,7 +24,7 @@ WORKDIR /src
 FROM base as mbedtls
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.4.1.tar.gz \
+RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.5.1.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
 # Fix bug with newer compilers due to missing \emptydescription
@@ -32,9 +34,8 @@ RUN find . -type f \( -name '*.c' -o -name '*.h' \) -exec \
 # Compile & install
 WORKDIR /src/build
 RUN emcmake cmake \
-	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_BUILD_TYPE=MinSizeRel \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DENABLE_TESTING=Off \
 	-DENABLE_PROGRAMS=Off \
@@ -53,9 +54,8 @@ RUN curl -fsSL https://github.com/lz4/lz4/archive/refs/tags/v1.9.4.tar.gz \
 # Compile & install
 WORKDIR /src/build/cmake/build
 RUN emcmake cmake \
-	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_BUILD_TYPE=MinSizeRel \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DLZ4_BUILD_CLI=Off \
 	-DLZ4_BUILD_LEGACY_LZ4C=Off \
@@ -71,17 +71,20 @@ FROM base as lzo
 RUN curl -fsSL https://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
+RUN sed -i "/^if(0)/d" /src/CMakeLists.txt \
+	&& sed -i "/^add_test/d" /src/CMakeLists.txt \
+	&& sed -i "/^include(CTest)/d" /src/CMakeLists.txt \
+	&& sed -ie 's/^if(1)/if(0)/' /src/CMakeLists.txt \
+	&& sed -ie 's/^# main test driver/if(0)/' /src/CMakeLists.txt
+
 # Compile & install
 WORKDIR /src/build
 RUN emcmake cmake \
-	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_BUILD_TYPE=MinSizeRel \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
-	-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	..
-RUN emmake make -j$(nproc) lzo_static_lib
-RUN touch lzopack.js lzotest.js simple.js testmini.js
+RUN emmake make -j$(nproc)
 RUN emmake make install
 
 # --
@@ -89,8 +92,8 @@ RUN emmake make install
 FROM base as lzma
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/tukaani-project/xz/releases/download/v5.4.4/xz-5.4.4.tar.gz \
-	| tar -xzf- -C /src --strip-components 1
+RUN curl -fsSL https://github.com/tukaani-project/xz/releases/download/v5.4.5/xz-5.4.5.tar.xz \
+	| tar -xJf- -C /src --strip-components 1
 
 # Patch out big endian test, it sometimes fails for no reason and WebASM is always little endian
 RUN sed -i -e 's/test_big_endian(WORDS_BIGENDIAN)/set(WORDS_BIGENDIAN OFF)/g' cmake/tuklib_integer.cmake
@@ -99,18 +102,18 @@ RUN sed -i -e 's/test_big_endian(WORDS_BIGENDIAN)/set(WORDS_BIGENDIAN OFF)/g' cm
 WORKDIR /src/build
 # Note: DENABLE_THREADS=OFF must be uppercase
 RUN emcmake cmake \
-	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_BUILD_TYPE=MinSizeRel \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DHAVE_POSIX_SPAWN=0 -DHAVE_PTHREAD_H=0 -DHAVE_LIBPTHREAD=0 -DPTHREAD_IN_LIBC=0 -DHAVE_POSIX_SPAWNP=0 \
 	-DWORDS_BIGENDIAN=0 \
 	-DENABLE_THREADS=OFF \
-	-DBUILD_SHARED_LIBS=Off \
+	-DENABLE_SMALL=On \
+	-DBUILD_TESTING=Off \
 	-DCREATE_XZ_SYMLINKS=Off \
 	-DCREATE_LZMA_SYMLINKS=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log && exit 1; }
 # Only build liblzma, because the xz utilities are not compatible with WebASM yet
 RUN emmake make -j$(nproc) liblzma
 # Work-around make install requiring this files to exist to not fail
@@ -128,9 +131,8 @@ RUN curl -fsSL https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.
 # Compile & install
 WORKDIR /src/build/cmake/build
 RUN emcmake cmake \
-	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_BUILD_TYPE=MinSizeRel \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DZSTD_BUILD_TESTS=Off \
 	-DZSTD_BUILD_STATIC=On \
@@ -147,15 +149,14 @@ RUN emmake make install
 FROM base as bzip
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/libarchive/bzip2/archive/1ea1ac188ad4b9cb662e3f8314673c63df95a589.tar.gz \
+RUN curl -fsSL https://gitlab.com/bzip2/bzip2/-/archive/66c46b8/bzip2.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
 # Compile & install
 WORKDIR /src/build
 RUN emcmake cmake \
-	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_BUILD_TYPE=MinSizeRel \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DENABLE_APP=Off \
 	-DENABLE_DOCS=Off \
@@ -163,6 +164,8 @@ RUN emcmake cmake \
 	-DENABLE_EXAMPLES=Off \
 	-DENABLE_STATIC_LIB=On \
 	-DENABLE_SHARED_LIB=Off \
+	-DENABLE_STATIC_LIB_IS_PIC=On \
+	-DENABLE_TESTS=Off \
 	..
 RUN emmake make -j$(nproc)
 RUN emmake make install
@@ -196,9 +199,8 @@ COPY --from=bzip $SYSROOT $SYSROOT
 WORKDIR /src/_build
 ENV CFLAGS="$CFLAGS -DARCHIVE_ERRNO_PROGRAMMER_ERROR=-3 -DARCHIVE_ERRNO_FILE_FORMAT=-2 -DARCHIVE_ERRNO_MISC=-1"
 RUN emcmake cmake \
-	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_BUILD_TYPE=MinSizeRel \
 	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_POSITION_INDEPENDENT_CODE=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DHAVE_POSIX_SPAWN=0 -DHAVE_PTHREAD_H=0 -DHAVE_LIBPTHREAD=0 -DPTHREAD_IN_LIBC=0 -DHAVE_POSIX_SPAWNP=0 \
 	-DHAVE_VFORK=0 -DHAVE_FORK=0 -DHAVE__FSEEKI64=0 \

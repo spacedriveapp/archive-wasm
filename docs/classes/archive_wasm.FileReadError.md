@@ -12,7 +12,7 @@
 
 ### constructor
 
-• **new FileReadError**(`code`, `message?`)
+• **new FileReadError**(`code`, `message?`): [`FileReadError`](archive_wasm.FileReadError.md)
 
 Main error class
 
@@ -22,6 +22,10 @@ Main error class
 | :--------- | :------- | :------------ |
 | `code`     | `number` | Error code    |
 | `message?` | `string` | Error message |
+
+#### Returns
+
+[`FileReadError`](archive_wasm.FileReadError.md)
 
 #### Inherited from
 
@@ -122,7 +126,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 ### captureStackTrace
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

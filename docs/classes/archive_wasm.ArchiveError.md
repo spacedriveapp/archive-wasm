@@ -26,7 +26,7 @@
 
 ### constructor
 
-• **new ArchiveError**(`code`, `message?`)
+• **new ArchiveError**(`code`, `message?`): [`ArchiveError`](archive_wasm.ArchiveError.md)
 
 Main error class
 
@@ -36,6 +36,10 @@ Main error class
 | :--------- | :------- | :------------ |
 | `code`     | `number` | Error code    |
 | `message?` | `string` | Error message |
+
+#### Returns
+
+[`ArchiveError`](archive_wasm.ArchiveError.md)
 
 #### Overrides
 
@@ -132,7 +136,7 @@ Error.stackTraceLimit
 
 ### captureStackTrace
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

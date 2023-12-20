@@ -1,4 +1,4 @@
-# Interface: ExtractAllExclusiveOpts<\>
+# Interface: ExtractAllExclusiveOpts\<\>
 
 [archive-wasm](../modules/archive_wasm.md).ExtractAllExclusiveOpts
 

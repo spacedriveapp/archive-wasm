@@ -6,7 +6,7 @@
     "url": "https://github.com/spacedriveapp/archive-wasm/issues"
   },
   "author": "Vítor Vasconcellos",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18"
@@ -268,26 +268,26 @@
     ]
   },
   "devDependencies": {
-    "@babel/core": "^7.23.0",
-    "@babel/eslint-parser": "^7.22.15",
-    "@babel/eslint-plugin": "^7.22.10",
-    "@babel/preset-env": "^7.22.20",
-    "@types/node": "^20.7.0",
-    "@typescript-eslint/eslint-plugin": "^6.7.3",
-    "@typescript-eslint/parser": "^6.7.3",
-    "ava": "^5.3.1",
+    "@babel/core": "^7.23.6",
+    "@babel/eslint-parser": "^7.23.3",
+    "@babel/eslint-plugin": "^7.23.5",
+    "@babel/preset-env": "^7.23.6",
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "ava": "^6.0.1",
     "clean-package": "^2.2.0",
-    "concurrently": "^8.2.1",
-    "eslint": "^8.50.0",
-    "eslint-config-prettier": "^9.0.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-jsdoc": "^46.8.2",
+    "eslint-plugin-jsdoc": "^46.9.1",
     "eslint-plugin-license-header": "^0.6.0",
-    "eslint-plugin-local-rules": "^2.0.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "prettier": "3.0.3",
-    "typedoc": "^0.25.1",
-    "typedoc-plugin-markdown": "^3.16.0",
-    "typescript": "^5.2.2"
+    "eslint-plugin-local-rules": "^2.0.1",
+    "eslint-plugin-prettier": "^5.1.0",
+    "prettier": "3.1.1",
+    "typedoc": "^0.25.4",
+    "typedoc-plugin-markdown": "^3.17.1",
+    "typescript": "^5.3.3"
   }
 }

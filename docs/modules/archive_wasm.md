@@ -29,7 +29,7 @@ Idiomatic JavaScript API for extracting most archive files with LibArchive
 
 ### ExtractAllOpts
 
-Ƭ **ExtractAllOpts**<\>: [`ExtractOpts`](../interfaces/archive_wasm.ExtractOpts.md) & [`ExtractAllExclusiveOpts`](../interfaces/archive_wasm.ExtractAllExclusiveOpts.md)
+Ƭ **ExtractAllOpts**\<\>: [`ExtractOpts`](../interfaces/archive_wasm.ExtractOpts.md) & [`ExtractAllExclusiveOpts`](../interfaces/archive_wasm.ExtractAllExclusiveOpts.md)
 
 ## Functions
 
@@ -47,7 +47,7 @@ Disable lib warnings
 
 ### extract
 
-▸ **extract**(`data`, `opts?`): `Generator`<[`Entry`](../interfaces/archive_wasm.Entry.md), `void`, `void`\>
+▸ **extract**(`data`, `opts?`): `Generator`\<[`Entry`](../interfaces/archive_wasm.Entry.md), `void`, `void`\>
 
 Uncompress archive and iterate through all it's entries
 
@@ -60,7 +60,7 @@ Uncompress archive and iterate through all it's entries
 
 #### Returns
 
-`Generator`<[`Entry`](../interfaces/archive_wasm.Entry.md), `void`, `void`\>
+`Generator`\<[`Entry`](../interfaces/archive_wasm.Entry.md), `void`, `void`\>
 
 Generator that iterate through all of the archive's entries
 

@@ -1,4 +1,4 @@
-# Interface: ExtractOpts<\>
+# Interface: ExtractOpts\<\>
 
 [archive-wasm](../modules/archive_wasm.md).ExtractOpts
 

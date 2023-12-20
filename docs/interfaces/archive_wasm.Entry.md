@@ -1,4 +1,4 @@
-# Interface: Entry<\>
+# Interface: Entry\<\>
 
 [archive-wasm](../modules/archive_wasm.md).Entry
 

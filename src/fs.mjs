@@ -27,6 +27,8 @@ import * as path from 'node:path'
 import { extractAll } from './archive.mjs'
 import { WARNING } from './wasm/bridge.mjs'
 
+const untrue = () => false
+
 /**
  * Check if file not found error
  * @private
@@ -45,6 +47,8 @@ function isENOENT(error) {
  * @returns {Promise<void>} Fulfills with `undefined` upon success.
  */
 async function fchmod(path, mode) {
+  if (fs.constants.O_SYMLINK == null) return
+
   const fd = await fs.open(path, fs.constants.O_WRONLY | fs.constants.O_SYMLINK)
   try {
     return await fd.chmod(mode)
@@ -64,7 +68,12 @@ async function mkdir(dirPath, perm, atime, mtime) {
   await fs.mkdir(dirPath, { mode: perm, recursive: true })
   // Ensure permissions are set, because dir could have been create by another call
   await fs.chmod(dirPath, perm)
-  await fs.utimes(dirPath, String(atime), String(mtime))
+
+  try {
+    await fs.utimes(dirPath, String(atime), String(mtime))
+  } catch (error) {
+    if (WARNING) console.warn(`Failed to update symlink metadata: ${dirPath}`, error)
+  }
 }
 
 /**
@@ -83,10 +92,25 @@ async function symlink(filePath, link, perm, atime, mtime, overwrite) {
     } catch (error) {
       if (!isENOENT(error)) throw error
     }
+
   await fs.mkdir(path.dirname(filePath), { mode: 0o751, recursive: true })
-  await fs.symlink(link, filePath, 'junction')
-  await fchmod(filePath, perm)
-  await fs.lutimes(filePath, String(atime), String(mtime))
+
+  let symlinkType
+  if (
+    process.platform === 'win32' &&
+    (await fs.lstat(link).then(linkStat => linkStat.isDirectory(), untrue))
+  ) {
+    symlinkType = 'junction'
+  }
+
+  await fs.symlink(link, filePath, symlinkType)
+
+  try {
+    await fchmod(filePath, perm)
+    await fs.lutimes(filePath, String(atime), String(mtime))
+  } catch (error) {
+    if (WARNING) console.warn(`Failed to update symlink metadata: ${filePath}`, error)
+  }
 }
 
 /**
@@ -107,8 +131,13 @@ async function hardlink(filePath, link, perm, atime, mtime, overwrite) {
     }
   await fs.mkdir(path.dirname(filePath), { mode: 0o751, recursive: true })
   await fs.link(link, filePath)
-  await fs.chmod(filePath, perm)
-  await fs.utimes(filePath, String(atime), String(mtime))
+
+  try {
+    await fs.chmod(filePath, perm)
+    await fs.utimes(filePath, String(atime), String(mtime))
+  } catch (error) {
+    if (WARNING) console.warn(`Failed to update hardlink metadata: ${filePath}`, error)
+  }
 }
 
 /**
@@ -126,7 +155,12 @@ async function writeFile(filePath, data, perm, atime, mtime, overwrite) {
     mode: perm,
     flag: overwrite ? 'w+' : 'wx+',
   })
-  await fs.utimes(filePath, String(atime), String(mtime))
+
+  try {
+    await fs.utimes(filePath, String(atime), String(mtime))
+  } catch (error) {
+    if (WARNING) console.warn(`Failed to update symlink metadata: ${filePath}`, error)
+  }
 }
 
 /**
@@ -168,26 +202,6 @@ export async function extractTo(data, out, opts) {
     opts.ignoreDotDir = true
   }
 
-  /**
-   * @private
-   * @type {Array.<Parameters.<mkdir>>}
-   */
-  const opsDir = []
-  /**
-   * @private
-   * @type {Array.<Parameters.<symlink>>}
-   */
-  const opsSymlink = []
-  /**
-   * @private
-   * @type {Array.<Parameters.<hardlink>>}
-   */
-  const opsHardlink = []
-  /**
-   * @private
-   * @type {Array.<Parameters.<writeFile>>}
-   */
-  const opsWriteFile = []
   for (const entry of extractAll(data, opts)) {
     if (entry.path == null) {
       if (WARNING) console.warn('Ignoring empty path entry')
@@ -210,21 +224,21 @@ export async function extractTo(data, out, opts) {
         if (entry.link === null) {
           if (WARNING) console.warn(`Invalid hardlink: ${entry.path}, skiping...`)
         } else {
-          opsHardlink.push([entryPath, entry.link, perms, entry.atime, entry.mtime, overwrite])
+          await hardlink(entryPath, entry.link, perms, entry.atime, entry.mtime, overwrite)
         }
         break
       case 'DIR':
-        opsDir.push([entryPath, perms, entry.atime, entry.mtime])
+        await mkdir(entryPath, perms, entry.atime, entry.mtime)
         break
       case 'FILE': {
-        opsWriteFile.push([entryPath, entry.data, perms, entry.atime, entry.mtime, overwrite])
+        await writeFile(entryPath, entry.data, perms, entry.atime, entry.mtime, overwrite)
         break
       }
       case 'SYMBOLIC_LINK':
         if (entry.link == null) {
           if (WARNING) console.warn(`Invalid symlink: ${entry.path}, skiping...`)
         } else {
-          opsSymlink.push([entryPath, entry.link, perms, entry.atime, entry.mtime, overwrite])
+          await symlink(entryPath, entry.link, perms, entry.atime, entry.mtime, overwrite)
         }
         break
       default:
@@ -232,9 +246,4 @@ export async function extractTo(data, out, opts) {
         break
     }
   }
-
-  await Promise.all(opsDir.map(args => mkdir(...args)))
-  await Promise.all(opsWriteFile.map(args => writeFile(...args)))
-  await Promise.all(opsHardlink.map(args => hardlink(...args)))
-  await Promise.all(opsSymlink.map(args => symlink(...args)))
 }

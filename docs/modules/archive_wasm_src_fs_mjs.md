@@ -12,13 +12,13 @@ Utilities for extracting archives to disk using NodeJS's fs API
 
 ### ExtractToOpts
 
-Ƭ **ExtractToOpts**<\>: [`archive-wasm`](archive_wasm.md) & [`ExtractToExclusiveOpts`](../interfaces/archive_wasm_src_fs_mjs.ExtractToExclusiveOpts.md)
+Ƭ **ExtractToOpts**\<\>: [`archive-wasm`](archive_wasm.md) & [`ExtractToExclusiveOpts`](../interfaces/archive_wasm_src_fs_mjs.ExtractToExclusiveOpts.md)
 
 ## Functions
 
 ### extractTo
 
-▸ **extractTo**(`data`, `out`, `opts?`): `Promise`<`void`\>
+▸ **extractTo**(`data`, `out`, `opts?`): `Promise`\<`void`\>
 
 Extract all supported archive entries inside a given path
 
@@ -36,4 +36,4 @@ Extract all supported archive entries inside a given path
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`\<`void`\>

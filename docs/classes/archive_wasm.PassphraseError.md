@@ -12,7 +12,7 @@
 
 ### constructor
 
-• **new PassphraseError**(`code`, `message?`)
+• **new PassphraseError**(`code`, `message?`): [`PassphraseError`](archive_wasm.PassphraseError.md)
 
 #### Parameters
 
@@ -20,6 +20,10 @@
 | :--------- | :------- | :------------ |
 | `code`     | `number` | Error code    |
 | `message?` | `string` | Error message |
+
+#### Returns
+
+[`PassphraseError`](archive_wasm.PassphraseError.md)
 
 #### Overrides
 
@@ -120,7 +124,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 ### captureStackTrace
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

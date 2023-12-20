@@ -12,7 +12,7 @@
 
 ### constructor
 
-• **new FailedError**(`code`, `message?`)
+• **new FailedError**(`code`, `message?`): [`FailedError`](archive_wasm.FailedError.md)
 
 Main error class
 
@@ -22,6 +22,10 @@ Main error class
 | :--------- | :------- | :------------ |
 | `code`     | `number` | Error code    |
 | `message?` | `string` | Error message |
+
+#### Returns
+
+[`FailedError`](archive_wasm.FailedError.md)
 
 #### Inherited from
 
@@ -122,7 +126,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 ### captureStackTrace
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
