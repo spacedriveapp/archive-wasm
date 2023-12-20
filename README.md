@@ -36,7 +36,7 @@ const archiveData = new Uint8Array([
 ])
 
 for (const entry of extract(archiveData)) {
-  if (getEntryType(entry) === 'FILE' && entry.path.endsWith('lyrics.txt')) {
+  if (entry.type === 'FILE' && entry.path.endsWith('lyrics.txt')) {
     console.log(`Found lyrics file: ${entry.path}, size: ${entry.size}`)
     console.log(new TextDecoder().decode(entry.data))
   }

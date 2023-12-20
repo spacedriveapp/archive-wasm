@@ -46,7 +46,7 @@ function isENOENT(error) {
  * @param {number} mode New permissions
  * @returns {Promise<void>} Fulfills with `undefined` upon success.
  */
-async function fchmod(path, mode) {
+async function lchmod(path, mode) {
   if (fs.constants.O_SYMLINK == null) return
 
   const fd = await fs.open(path, fs.constants.O_WRONLY | fs.constants.O_SYMLINK)
@@ -106,7 +106,7 @@ async function symlink(filePath, link, perm, atime, mtime, overwrite) {
   await fs.symlink(link, filePath, symlinkType)
 
   try {
-    await fchmod(filePath, perm)
+    await lchmod(filePath, perm)
     await fs.lutimes(filePath, String(atime), String(mtime))
   } catch (error) {
     if (WARNING) console.warn(`Failed to update symlink metadata: ${filePath}`, error)
