@@ -6,7 +6,7 @@
     "url": "https://github.com/spacedriveapp/archive-wasm/issues"
   },
   "author": "Vítor Vasconcellos",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18"
@@ -56,6 +56,7 @@
     "files": [
       "test/*"
     ],
+    "workerThreads": false,
     "extensions": {
       "mjs": true
     }

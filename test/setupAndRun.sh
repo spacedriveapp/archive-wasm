@@ -17,7 +17,7 @@ deps() {
 
 cleanup() {
   printf "\nDeleting test archives...\n" >&2
-  git clean -qfX -e '!IELPKTH.CAB' -e '!GBK.zip' test
+  git clean -qfX -e '!IELPKTH.CAB' -e '!GBK.zip' -e '!native-deps-x86_64-linux-gnu.tar.xz' test
 }
 
 download() {
@@ -71,6 +71,8 @@ echo "Downloading test archives..." >&2
 download IELPKTH.CAB 'https://master.dl.sourceforge.net/project/corefonts/OldFiles/IELPKTH.CAB'
 # Download GBK encoded zip (https://sourceforge.net/p/sevenzip/bugs/2198, not including in the repo because I am not sure about the precedence of the files)
 download GBK.zip 'https://sourceforge.net/p/sevenzip/bugs/2198/attachment/sample.zip'
+# Add spacedrive own native-deps for testing
+download native-deps-x86_64-linux-gnu.tar.xz https://github.com/spacedriveapp/native-deps/releases/latest/download/native-deps-x86_64-linux-gnu.tar.xz
 
 # Disable macOS unsufferable ._* files being compressed and breaking tests
 export COPYFILE_DISABLE=1
@@ -80,40 +82,8 @@ echo "Creating test archives..." >&2
 compress test/license LICENSE.md PREAMBLE
 compress test/gitignore .gitignore .prettierignore
 
-signal() {
-  set -- "${1:-INT}" "${2:-0}" "$(ps x -o "pid pgid" | awk -v pid="${2:-$$}" '$1 == pid { print $2 }')"
-
-  if [ "$3" -gt 0 ]; then
-    # reset trap to avoid interrupt loop
-    trap '' "$1"
-    kill "-$1" -- "-$3" 2>/dev/null
-  elif [ "$2" -gt 0 ]; then
-    kill "-$1" "$2" 2>/dev/null
-  fi
-
-  sleep 1
-
-  if [ "$2" -gt 0 ]; then
-    kill -KILL "$2" 2>/dev/null
-  fi
-
-  if [ "$3" -gt 0 ]; then
-    cleanup
-    kill -KILL -- "-$3" 2>/dev/null
-  fi
-}
-
 npx -- ava "$@" &
-_pid=$!
-trap 'signal INT "$_pid"' INT
-trap 'signal TERM "$_pid"' TERM
-wait "$_pid"
+trap 'kill -s INT $(jobs -pr)' INT
+trap 'kill -s TERM $(jobs -pr)' TERM
+wait %1
 
-# Handle debug mode sometimes hanging after test is done
-while [ $# -gt 0 ]; do
-  if [ "$1" = 'debug' ]; then
-    signal INT
-    break
-  fi
-  shift
-done

@@ -18,6 +18,8 @@
 
 import { createHash } from 'node:crypto'
 import * as fs from 'node:fs'
+import { tmpdir } from 'node:os'
+import * as path from 'node:path'
 
 // https://github.com/avajs/ava/pull/3128
 // eslint-disable-next-line import/no-unresolved
@@ -32,7 +34,11 @@ import {
   ArchiveError,
   ExceedSizeLimitError,
 } from '../src/archive.mjs'
+import { extractTo } from '../src/fs.mjs'
 import { FILETYPE_FLAG } from '../src/wasm/enums.mjs'
+
+// The parent directory for the new temporary directory
+const tmpDir = tmpdir()
 
 disableWarning()
 
@@ -269,4 +275,20 @@ test("Test extract's ignoreDotDir option", t => {
   iter = extract(archiveFile, { ignoreDotDir: true })
   entry = iter.next().value
   t.not(entry.path, '.')
+})
+
+test('Test Spacedrive native-deps', async t => {
+  t.timeout(10 * 1000)
+
+  const archiveFile = fs.readFileSync(
+    new URL('native-deps-x86_64-linux-gnu.tar.xz', import.meta.url)
+  )
+  const tempDir = fs.mkdtempSync(path.join(tmpDir, 'native-deps-'))
+
+  try {
+    await extractTo(archiveFile, tempDir)
+    t.true(fs.readdirSync(tempDir).length > 0)
+  } finally {
+    fs.rmdirSync(tempDir, { recursive: true })
+  }
 })

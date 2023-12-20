@@ -13,7 +13,7 @@ COPY settings.sh /settings.sh
 RUN /settings.sh
 
 ENV FFLAGS="-fasynchronous-unwind-tables -fexceptions"
-ENV CFLAGS="-Oz -flto -fwasm-exceptions --minify=0 --closure=0 --no-entry -pipe -Wall -Werror=format-security ${FFLAGS}"
+ENV CFLAGS="-r -Oz -flto -fwasm-exceptions --minify=0 --closure=0 --no-entry -pipe -Wall -Werror=format-security ${FFLAGS}"
 ENV LDFLAGS="-pipe ${FFLAGS}"
 ENV CXXFLAGS="$CFLAGS"
 
@@ -113,7 +113,7 @@ RUN emcmake cmake \
 	-DBUILD_TESTING=Off \
 	-DCREATE_XZ_SYMLINKS=Off \
 	-DCREATE_LZMA_SYMLINKS=Off \
-	.. || { cat /src/build/CMakeFiles/CMakeError.log && exit 1; }
+	..
 # Only build liblzma, because the xz utilities are not compatible with WebASM yet
 RUN emmake make -j$(nproc) liblzma
 # Work-around make install requiring this files to exist to not fail
@@ -164,7 +164,6 @@ RUN emcmake cmake \
 	-DENABLE_EXAMPLES=Off \
 	-DENABLE_STATIC_LIB=On \
 	-DENABLE_SHARED_LIB=Off \
-	-DENABLE_STATIC_LIB_IS_PIC=On \
 	-DENABLE_TESTS=Off \
 	..
 RUN emmake make -j$(nproc)
