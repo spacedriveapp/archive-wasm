@@ -24,7 +24,7 @@ mkdir -p "$_dist"
 if [ "$_manager" = 'podman' ]; then
   $_manager build --jobs 4 --tag archive-wasm:latest --security-opt label=disable --network host --format docker "$__dir"
 else
-  $_manager build --allow "network.host" --network host --tag archive-wasm:latest "$__dir"
+  $_manager build --allow "network.host" --network host --tag archive-wasm:latest --load "$__dir"
 fi
 
 _id="$($_manager create archive-wasm:latest true)"
