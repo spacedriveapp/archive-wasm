@@ -60,13 +60,13 @@ jobs:
           curl -L "https://www.rarlab.com/rar/rarlinux-x64-701.tar.gz" \
           | tar -xzf- -C "${HOME}"
 
-          mv "${HOME}/rar"/{rar,unrar} /usr/bin
-          mv "${HOME}/rar/default.sfx" /usr/lib/default.sfx
+          sudo mv "${HOME}/rar"/{rar,unrar} /usr/bin
+          sudo mv "${HOME}/rar/default.sfx" /usr/lib/default.sfx
 
           curl -L "https://www.7-zip.org/a/7z2407-linux-x64.tar.xz" \
           | tar -xJf- -C "$HOME"
 
-          mv "$HOME"/{7zz,7zzs} /usr/bin
+          sudo mv "$HOME"/{7zz,7zzs} /usr/bin
 
       - name: Build and test archive-wasm
         run: |
