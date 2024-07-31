@@ -8,6 +8,7 @@ _manager="$(
   for manager in docker podman; do
     if command -v "$manager" 1>/dev/null 2>&1; then
       echo "$manager"
+      break
     fi
   done
 )"
@@ -21,9 +22,9 @@ _dist="$(CDPATH='' cd "${__dir}/../src" && pwd)"
 mkdir -p "$_dist"
 
 if [ "$_manager" = 'podman' ]; then
-  $_manager build "$__dir" --jobs 4 --tag archive-wasm:latest --security-opt label=disable --network host --format docker
+  $_manager build --jobs 4 --tag archive-wasm:latest --security-opt label=disable --network host --format docker "$__dir"
 else
-  $_manager build "$__dir" --network host --tag archive-wasm:latest
+  $_manager build --allow "network.host" --network host --tag archive-wasm:latest "$__dir"
 fi
 
 _id="$($_manager create archive-wasm:latest true)"

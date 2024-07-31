@@ -2,7 +2,10 @@
 
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
-FROM docker.io/emscripten/emsdk:3.1.64 as base
+# FIX-ME: Can't use emscripten version > 3.1.61, because 3.1.62 introduced a change in https://github.com/emscripten-core/emscripten/pull/21379
+# 	that makes the compilation of libarchive fail with the following error:
+# 	error: undefined symbol: __secs_to_zone (referenced by root reference (e.g. compiled C/C++ code))
+FROM docker.io/emscripten/emsdk:3.1.61 as base
 
 SHELL ["/bin/bash", "-euxc"]
 
@@ -13,7 +16,7 @@ COPY settings.sh /settings.sh
 RUN /settings.sh
 
 ENV FFLAGS="-fasynchronous-unwind-tables -fexceptions"
-ENV CFLAGS="-r -Oz -flto -fwasm-exceptions --minify=0 --closure=0 --no-entry -pipe -Wall -Werror=format-security ${FFLAGS}"
+ENV CFLAGS="-Oz -flto -fwasm-exceptions --minify=0 --closure=0 --no-entry -pipe -Wall -Werror=format-security ${FFLAGS}"
 ENV LDFLAGS="-pipe ${FFLAGS}"
 ENV CXXFLAGS="$CFLAGS"
 
@@ -26,6 +29,9 @@ FROM base as mbedtls
 # Download & de-compress
 RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
+
+RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls-framework/archive/750634d3a51eb9d61b59fd5d801546927c946588.tar.gz \
+	| tar -xzf- -C /src/framework --strip-components 1
 
 # Fix bug with newer compilers due to missing \emptydescription
 RUN find . -type f \( -name '*.c' -o -name '*.h' \) -exec \
@@ -117,7 +123,7 @@ RUN emcmake cmake \
 # Only build liblzma, because the xz utilities are not compatible with WebASM yet
 RUN emmake make -j$(nproc) liblzma
 # Work-around make install requiring this files to exist to not fail
-RUN touch xzdec.js xz.js
+RUN touch xz.js xzdec.js lzmadec.js lzmainfo.js
 RUN emmake make install
 
 # --
@@ -177,7 +183,7 @@ ARG SYSROOT
 
 # Download & de-compress
 RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.4/libarchive-3.7.4.tar.xz \
-	| tar -xzf- -C /src --strip-components 1
+	| tar -xJf- -C /src --strip-components 1
 
 # Patch to disable grzip and lrzip
 COPY ./remove_support_for_external_programs.patch ./
@@ -275,7 +281,7 @@ RUN emcc ./wrapper.o \
 	-s EXPORTED_FUNCTIONS=@/src/lib.exports \
 	-s EMIT_PRODUCERS_SECTION=1 \
 	-s EMIT_EMSCRIPTEN_LICENSE=1 \
-	-s EXPORTED_RUNTIME_METHODS=cwrap,ccall
+	-s EXPORTED_RUNTIME_METHODS=cwrap,ccall,HEAP8,HEAP_DATA_VIEW
 
 # --
 
