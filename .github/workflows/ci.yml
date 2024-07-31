@@ -58,7 +58,7 @@ jobs:
             pax
 
           curl -L "https://www.rarlab.com/rar/rarlinux-x64-701.tar.gz" \
-          | tar -czf- -C "${HOME}"
+          | tar -xzf- -C "${HOME}"
 
           mv "${HOME}/rar"/{rar,unrar} /usr/bin
           mv "${HOME}/rar/default.sfx" /usr/lib/default.sfx
