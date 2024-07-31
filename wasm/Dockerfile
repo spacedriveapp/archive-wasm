@@ -2,7 +2,7 @@
 
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
-FROM docker.io/emscripten/emsdk:3.1.51 as base
+FROM docker.io/emscripten/emsdk:3.1.64 as base
 
 SHELL ["/bin/bash", "-euxc"]
 
@@ -24,7 +24,7 @@ WORKDIR /src
 FROM base as mbedtls
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.5.1.tar.gz \
+RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
 # Fix bug with newer compilers due to missing \emptydescription
@@ -48,7 +48,7 @@ RUN emmake make install
 FROM base as lz4
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/lz4/lz4/archive/refs/tags/v1.9.4.tar.gz \
+RUN curl -fsSL https://github.com/lz4/lz4/archive/refs/tags/v1.10.0.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
 # Compile & install
@@ -92,7 +92,7 @@ RUN emmake make install
 FROM base as lzma
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/tukaani-project/xz/releases/download/v5.4.5/xz-5.4.5.tar.xz \
+RUN curl -fsSL https://github.com/tukaani-project/xz/releases/download/v5.6.2/xz-5.6.2.tar.xz \
 	| tar -xJf- -C /src --strip-components 1
 
 # Patch out big endian test, it sometimes fails for no reason and WebASM is always little endian
@@ -125,7 +125,7 @@ RUN emmake make install
 FROM base as zstd
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz \
+RUN curl -fsSL https://github.com/facebook/zstd/releases/download/v1.5.6/zstd-1.5.6.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
 # Compile & install
@@ -176,7 +176,7 @@ FROM base as libarchive
 ARG SYSROOT
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.2/libarchive-3.7.2.tar.gz \
+RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.4/libarchive-3.7.4.tar.xz \
 	| tar -xzf- -C /src --strip-components 1
 
 # Patch to disable grzip and lrzip

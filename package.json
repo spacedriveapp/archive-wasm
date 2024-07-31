@@ -6,7 +6,7 @@
     "url": "https://github.com/spacedriveapp/archive-wasm/issues"
   },
   "author": "Vítor Vasconcellos",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18"
