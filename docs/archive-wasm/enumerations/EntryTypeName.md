@@ -1,6 +1,8 @@
-# Enumeration: EntryTypeName
+[**archive-wasm**](../../README.md) • **Docs**
 
-[archive-wasm](../modules/archive_wasm.md).EntryTypeName
+---
+
+# Enumeration: EntryTypeName
 
 Mapping for all possible entry types:
 
