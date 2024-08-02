@@ -2,12 +2,15 @@
 
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
-# FIX-ME: Can't use emscripten version > 3.1.61, because 3.1.62 introduced a change in https://github.com/emscripten-core/emscripten/pull/21379
-# 	that makes the compilation of libarchive fail with the following error:
-# 	error: undefined symbol: __secs_to_zone (referenced by root reference (e.g. compiled C/C++ code))
-FROM docker.io/emscripten/emsdk:3.1.61 as base
+FROM docker.io/emscripten/emsdk:3.1.64 as base
 
 SHELL ["/bin/bash", "-euxc"]
+
+# Work around bug in emscripten 3.1.62+, introduced in https://github.com/emscripten-core/emscripten/pull/21379
+# 	that makes the compilation of libarchive fail with the following error:
+# 	error: undefined symbol: __secs_to_zone (referenced by root reference (e.g. compiled C/C++ code))
+COPY fix_tz.patch /root/
+RUN patch -F5 -lp1 -d / -t </root/fix_tz.patch
 
 RUN apt-get update -y && apt-get install -y pkg-config
 
@@ -16,7 +19,7 @@ COPY settings.sh /settings.sh
 RUN /settings.sh
 
 ENV FFLAGS="-fasynchronous-unwind-tables -fexceptions"
-ENV CFLAGS="-Oz -flto -fwasm-exceptions --minify=0 --closure=0 --no-entry -pipe -Wall -Werror=format-security ${FFLAGS}"
+ENV CFLAGS="-r -Oz -flto -fwasm-exceptions --minify=0 --closure=0 --no-entry -pipe -Wall -Werror=format-security ${FFLAGS}"
 ENV LDFLAGS="-pipe ${FFLAGS}"
 ENV CXXFLAGS="$CFLAGS"
 
@@ -45,7 +48,7 @@ RUN emcmake cmake \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DENABLE_TESTING=Off \
 	-DENABLE_PROGRAMS=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc)
 RUN emmake make install
 
@@ -65,7 +68,7 @@ RUN emcmake cmake \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DLZ4_BUILD_CLI=Off \
 	-DLZ4_BUILD_LEGACY_LZ4C=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc)
 RUN emmake make install
 
@@ -89,7 +92,7 @@ RUN emcmake cmake \
 	-DCMAKE_BUILD_TYPE=MinSizeRel \
 	-DBUILD_SHARED_LIBS=Off \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc)
 RUN emmake make install
 
@@ -101,9 +104,6 @@ FROM base as lzma
 RUN curl -fsSL https://github.com/tukaani-project/xz/releases/download/v5.6.2/xz-5.6.2.tar.xz \
 	| tar -xJf- -C /src --strip-components 1
 
-# Patch out big endian test, it sometimes fails for no reason and WebASM is always little endian
-RUN sed -i -e 's/test_big_endian(WORDS_BIGENDIAN)/set(WORDS_BIGENDIAN OFF)/g' cmake/tuklib_integer.cmake
-
 # Compile & install
 WORKDIR /src/build
 # Note: DENABLE_THREADS=OFF must be uppercase
@@ -112,6 +112,8 @@ RUN emcmake cmake \
 	-DBUILD_SHARED_LIBS=Off \
 	-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
+	-DCMAKE_C_BYTE_ORDER=LITTLE_ENDIAN \
+	-DCMAKE_CXX_BYTE_ORDER=LITTLE_ENDIAN \
 	-DHAVE_POSIX_SPAWN=0 -DHAVE_PTHREAD_H=0 -DHAVE_LIBPTHREAD=0 -DPTHREAD_IN_LIBC=0 -DHAVE_POSIX_SPAWNP=0 \
 	-DWORDS_BIGENDIAN=0 \
 	-DENABLE_THREADS=OFF \
@@ -119,7 +121,7 @@ RUN emcmake cmake \
 	-DBUILD_TESTING=Off \
 	-DCREATE_XZ_SYMLINKS=Off \
 	-DCREATE_LZMA_SYMLINKS=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 # Only build liblzma, because the xz utilities are not compatible with WebASM yet
 RUN emmake make -j$(nproc) liblzma
 # Work-around make install requiring this files to exist to not fail
@@ -146,7 +148,7 @@ RUN emcmake cmake \
 	-DZSTD_BUILD_CONTRIB=Off \
 	-DZSTD_BUILD_PROGRAMS=Off \
 	-DZSTD_MULTITHREAD_SUPPORT=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc)
 RUN emmake make install
 
@@ -171,7 +173,7 @@ RUN emcmake cmake \
 	-DENABLE_STATIC_LIB=On \
 	-DENABLE_SHARED_LIB=Off \
 	-DENABLE_TESTS=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc)
 RUN emmake make install
 
@@ -237,7 +239,7 @@ RUN emcmake cmake \
 	-DENABLE_TEST=Off \
 	-DPOSIX_REGEX_LIB=libc \
 	-DLIBARCHIVE_STATIC=1 \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc) 2>&1
 RUN emmake make install
 
