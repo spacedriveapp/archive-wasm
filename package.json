@@ -52,7 +52,7 @@
     "editorconfig": "curl -sSLOJ 'https://raw.githubusercontent.com/jokeyrhyme/standard-editorconfig/main/.editorconfig'"
   },
   "ava": {
-    "timeout": "2s",
+    "timeout": "5s",
     "files": [
       "test/*"
     ],

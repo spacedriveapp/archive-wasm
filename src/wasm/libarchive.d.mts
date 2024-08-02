@@ -1,13 +1,5 @@
 // Modified version of @types/emscripten to match only what our WASM build exports
-
-// Type definitions for Emscripten 1.39.16
-// Project: https://emscripten.org
-// Definitions by: Kensuke Matsuzaki <https://github.com/zakki>
-//                 Periklis Tsirakidis <https://github.com/periklis>
-//                 Bumsik Kim <https://github.com/kbumsik>
-//                 Louis DeScioli <https://github.com/lourd>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 2.2
+// Original definitions: https://github.com/DefinitelyTyped/DefinitelyTyped/blob/77922c3/types/emscripten/index.d.ts
 
 declare namespace Emscripten {
   type JSType = 'number' | 'string' | 'array' | 'boolean'
@@ -41,18 +33,8 @@ type ReturnToType<R extends Emscripten.JSType | null> = R extends null
 
 export const wasm: {
   HEAP8: Int8Array
-  HEAP16: Int16Array
-  HEAP32: Int32Array
-  HEAPU8: Uint8Array
-  HEAPU16: Uint16Array
-  HEAPU32: Uint32Array
-  HEAPF32: Float32Array
-  HEAPF64: Float64Array
-  HEAP64: BigInt64Array
-  HEAPU64: BigUint64Array
   HEAP_DATA_VIEW: DataView
 
-  ready: Promise<EmscriptenModule>
   calledRun: boolean
   thisProgram: string
 
@@ -69,6 +51,5 @@ export const wasm: {
     args: ArgsToType<I>,
     opts?: Emscripten.CCallOpts
   ): ReturnToType<R>
-  inspect(): string
   locateFile(url: string, scriptDirectory: string): string
 }
