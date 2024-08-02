@@ -1,12 +1,14 @@
-# Interface: Entry\<\>
+[**archive-wasm**](../../README.md) • **Docs**
 
-[archive-wasm](../modules/archive_wasm.md).Entry
+---
+
+# Interface: Entry
 
 ## Properties
 
 ### atime
 
-• **atime**: `bigint`
+> **atime**: `bigint`
 
 The timestamp indicating the last time this file was accessed expressed in nanoseconds since the POSIX Epoch
 
@@ -14,7 +16,7 @@ The timestamp indicating the last time this file was accessed expressed in nanos
 
 ### birthtime
 
-• **birthtime**: `bigint`
+> **birthtime**: `bigint`
 
 The timestamp indicating the creation time of this file expressed in nanoseconds since the POSIX Epoch
 
@@ -22,7 +24,7 @@ The timestamp indicating the creation time of this file expressed in nanoseconds
 
 ### ctime
 
-• **ctime**: `bigint`
+> **ctime**: `bigint`
 
 The timestamp indicating the last time the file status was changed expressed in nanoseconds since the POSIX Epoch
 
@@ -30,7 +32,7 @@ The timestamp indicating the last time the file status was changed expressed in 
 
 ### data
 
-• **data**: `ArrayBufferLike`
+> **data**: `ArrayBufferLike`
 
 An `ArrayBuffer` containing the entry's data
 
@@ -38,7 +40,7 @@ An `ArrayBuffer` containing the entry's data
 
 ### link
 
-• **link**: `null` \| `string`
+> **link**: `null` \| `string`
 
 path to actual resource in case this is a symlink or hardlink
 
@@ -46,7 +48,7 @@ path to actual resource in case this is a symlink or hardlink
 
 ### mtime
 
-• **mtime**: `bigint`
+> **mtime**: `bigint`
 
 The timestamp indicating the last time this file was modified expressed in nanoseconds since the POSIX Epoch
 
@@ -54,7 +56,7 @@ The timestamp indicating the last time this file was modified expressed in nanos
 
 ### path
 
-• **path**: `null` \| `string`
+> **path**: `null` \| `string`
 
 Path of the entry within the archive
 
@@ -62,7 +64,7 @@ Path of the entry within the archive
 
 ### perm
 
-• **perm**: `number`
+> **perm**: `number`
 
 A bit-field describing the file type and mode
 
@@ -70,7 +72,7 @@ A bit-field describing the file type and mode
 
 ### size
 
-• **size**: `bigint`
+> **size**: `bigint`
 
 Size of the entry in bytes
 
@@ -78,6 +80,6 @@ Size of the entry in bytes
 
 ### type
 
-• **type**: `null` \| [`EntryTypeName`](../enums/archive_wasm.EntryTypeName.md)
+> **type**: `null` \| [`EntryTypeName`](../enumerations/EntryTypeName.md)
 
 Indicates if the entry is a file, directory or something else

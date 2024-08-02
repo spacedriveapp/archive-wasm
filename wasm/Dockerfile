@@ -1,10 +1,17 @@
 # syntax=docker/dockerfile:1
 
+ARG ARM=''
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
-FROM docker.io/emscripten/emsdk:3.1.51 as base
+FROM docker.io/emscripten/emsdk:3.1.64${ARM} as base
 
 SHELL ["/bin/bash", "-euxc"]
+
+# Work around bug in emscripten 3.1.62+, introduced in https://github.com/emscripten-core/emscripten/pull/21379
+# 	that makes the compilation of libarchive fail with the following error:
+# 	error: undefined symbol: __secs_to_zone (referenced by root reference (e.g. compiled C/C++ code))
+COPY fix_tz.patch /root/
+RUN patch -F5 -lp1 -d / -t </root/fix_tz.patch
 
 RUN apt-get update -y && apt-get install -y pkg-config
 
@@ -15,7 +22,7 @@ RUN /settings.sh
 ENV FFLAGS="-fasynchronous-unwind-tables -fexceptions"
 ENV CFLAGS="-r -Oz -flto -fwasm-exceptions --minify=0 --closure=0 --no-entry -pipe -Wall -Werror=format-security ${FFLAGS}"
 ENV LDFLAGS="-pipe ${FFLAGS}"
-ENV CXXFLAGS="$CFLAGS"
+ENV CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
 
 WORKDIR /src
 
@@ -24,8 +31,11 @@ WORKDIR /src
 FROM base as mbedtls
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.5.1.tar.gz \
+RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
+
+RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls-framework/archive/750634d3a51eb9d61b59fd5d801546927c946588.tar.gz \
+	| tar -xzf- -C /src/framework --strip-components 1
 
 # Fix bug with newer compilers due to missing \emptydescription
 RUN find . -type f \( -name '*.c' -o -name '*.h' \) -exec \
@@ -39,7 +49,7 @@ RUN emcmake cmake \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DENABLE_TESTING=Off \
 	-DENABLE_PROGRAMS=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc)
 RUN emmake make install
 
@@ -48,7 +58,7 @@ RUN emmake make install
 FROM base as lz4
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/lz4/lz4/archive/refs/tags/v1.9.4.tar.gz \
+RUN curl -fsSL https://github.com/lz4/lz4/archive/refs/tags/v1.10.0.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
 # Compile & install
@@ -59,7 +69,7 @@ RUN emcmake cmake \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
 	-DLZ4_BUILD_CLI=Off \
 	-DLZ4_BUILD_LEGACY_LZ4C=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc)
 RUN emmake make install
 
@@ -83,7 +93,7 @@ RUN emcmake cmake \
 	-DCMAKE_BUILD_TYPE=MinSizeRel \
 	-DBUILD_SHARED_LIBS=Off \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc)
 RUN emmake make install
 
@@ -92,11 +102,8 @@ RUN emmake make install
 FROM base as lzma
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/tukaani-project/xz/releases/download/v5.4.5/xz-5.4.5.tar.xz \
+RUN curl -fsSL https://github.com/tukaani-project/xz/releases/download/v5.6.2/xz-5.6.2.tar.xz \
 	| tar -xJf- -C /src --strip-components 1
-
-# Patch out big endian test, it sometimes fails for no reason and WebASM is always little endian
-RUN sed -i -e 's/test_big_endian(WORDS_BIGENDIAN)/set(WORDS_BIGENDIAN OFF)/g' cmake/tuklib_integer.cmake
 
 # Compile & install
 WORKDIR /src/build
@@ -106,6 +113,8 @@ RUN emcmake cmake \
 	-DBUILD_SHARED_LIBS=Off \
 	-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=On \
 	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
+	-DCMAKE_C_BYTE_ORDER=LITTLE_ENDIAN \
+	-DCMAKE_CXX_BYTE_ORDER=LITTLE_ENDIAN \
 	-DHAVE_POSIX_SPAWN=0 -DHAVE_PTHREAD_H=0 -DHAVE_LIBPTHREAD=0 -DPTHREAD_IN_LIBC=0 -DHAVE_POSIX_SPAWNP=0 \
 	-DWORDS_BIGENDIAN=0 \
 	-DENABLE_THREADS=OFF \
@@ -113,11 +122,11 @@ RUN emcmake cmake \
 	-DBUILD_TESTING=Off \
 	-DCREATE_XZ_SYMLINKS=Off \
 	-DCREATE_LZMA_SYMLINKS=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 # Only build liblzma, because the xz utilities are not compatible with WebASM yet
 RUN emmake make -j$(nproc) liblzma
 # Work-around make install requiring this files to exist to not fail
-RUN touch xzdec.js xz.js
+RUN touch xz.js xzdec.js lzmadec.js lzmainfo.js
 RUN emmake make install
 
 # --
@@ -125,7 +134,7 @@ RUN emmake make install
 FROM base as zstd
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz \
+RUN curl -fsSL https://github.com/facebook/zstd/releases/download/v1.5.6/zstd-1.5.6.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
 # Compile & install
@@ -140,32 +149,7 @@ RUN emcmake cmake \
 	-DZSTD_BUILD_CONTRIB=Off \
 	-DZSTD_BUILD_PROGRAMS=Off \
 	-DZSTD_MULTITHREAD_SUPPORT=Off \
-	..
-RUN emmake make -j$(nproc)
-RUN emmake make install
-
-# --
-
-FROM base as bzip
-
-# Download & de-compress
-RUN curl -fsSL https://gitlab.com/bzip2/bzip2/-/archive/66c46b8/bzip2.tar.gz \
-	| tar -xzf- -C /src --strip-components 1
-
-# Compile & install
-WORKDIR /src/build
-RUN emcmake cmake \
-	-DCMAKE_BUILD_TYPE=MinSizeRel \
-	-DBUILD_SHARED_LIBS=Off \
-	-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=On \
-	-DENABLE_APP=Off \
-	-DENABLE_DOCS=Off \
-	-DUSE_OLD_SONAME=On \
-	-DENABLE_EXAMPLES=Off \
-	-DENABLE_STATIC_LIB=On \
-	-DENABLE_SHARED_LIB=Off \
-	-DENABLE_TESTS=Off \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc)
 RUN emmake make install
 
@@ -176,8 +160,8 @@ FROM base as libarchive
 ARG SYSROOT
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.2/libarchive-3.7.2.tar.gz \
-	| tar -xzf- -C /src --strip-components 1
+RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.4/libarchive-3.7.4.tar.xz \
+	| tar -xJf- -C /src --strip-components 1
 
 # Patch to disable grzip and lrzip
 COPY ./remove_support_for_external_programs.patch ./
@@ -186,13 +170,15 @@ RUN patch -p1 -i remove_support_for_external_programs.patch
 # Build internal emsdk zlib version
 RUN embuilder --lto --pic build zlib
 
+# Build internal emsdk bzip2 version
+RUN embuilder --lto --pic build bzip2
+
 # Copy compiled dependencies
 COPY --from=mbedtls $SYSROOT $SYSROOT
 COPY --from=lz4 $SYSROOT $SYSROOT
 COPY --from=lzo $SYSROOT $SYSROOT
 COPY --from=lzma $SYSROOT $SYSROOT
 COPY --from=zstd $SYSROOT $SYSROOT
-COPY --from=bzip $SYSROOT $SYSROOT
 
 # Compile & install
 WORKDIR /src/_build
@@ -215,7 +201,7 @@ RUN emcmake cmake \
 	-DENABLE_ZLIB=On \
 	-DZLIB_LIBRARY=${SYSROOT}/lib/wasm64-emscripten/lto-pic/libz.a \
 	-DENABLE_BZip2=On \
-	-DBZIP2_LIBRARIES=${SYSROOT}/lib/libbz2_static.a \
+	-DBZIP2_LIBRARIES=${SYSROOT}/lib/wasm64-emscripten/lto-pic/libbz2.a \
 	-DENABLE_LIBXML2=Off \
 	-DENABLE_EXPAT=Off \
 	-DENABLE_PCREPOSIX=Off \
@@ -231,7 +217,7 @@ RUN emcmake cmake \
 	-DENABLE_TEST=Off \
 	-DPOSIX_REGEX_LIB=libc \
 	-DLIBARCHIVE_STATIC=1 \
-	..
+	.. || { cat /src/build/CMakeFiles/CMakeError.log; exit 1; }
 RUN emmake make -j$(nproc) 2>&1
 RUN emmake make install
 
@@ -263,22 +249,25 @@ RUN emcc ./wrapper.o \
 	"${SYSROOT}/lib/libmbedtls.a" \
 	"${SYSROOT}/lib/libmbedx509.a" \
 	"${SYSROOT}/lib/libmbedcrypto.a" \
-	"${SYSROOT}/lib/libbz2_static.a" \
 	-o ./wasm/libarchive.mjs $CFLAGS --lto --pic --strip-all --extern-pre-js=/src/pre.js --extern-post-js=/src/post.js \
 	-s USE_ZLIB=1 \
+	-s USE_BZIP2=1 \
 	-s POLYFILL=0 \
 	-s EXPORT_ES6=1 \
 	-s INVOKE_RUN=0 \
+	-s ASSERTIONS=1 \
 	-s MODULARIZE=1 \
-	-s TEXTDECODER=1 \
+	-s TEXTDECODER=2 \
 	-s EXPORT_NAME=wasmFactory \
 	-s EXPORTED_FUNCTIONS=@/src/lib.exports \
+	-s STACK_OVERFLOW_CHECK=2 \
+	-s INCOMING_MODULE_JS_API=[] \
 	-s EMIT_PRODUCERS_SECTION=1 \
 	-s EMIT_EMSCRIPTEN_LICENSE=1 \
-	-s EXPORTED_RUNTIME_METHODS=cwrap,ccall
+	-s EXPORTED_RUNTIME_METHODS=cwrap,ccall,HEAP8,HEAP_DATA_VIEW
 
 # --
 
 FROM scratch
 
-COPY --from=wrapper /src/wasm /wasm
+COPY --from=wrapper /src/wasm /

@@ -1,6 +1,10 @@
+**archive-wasm** • **Docs**
+
+---
+
 # archive-wasm
 
 ## Modules
 
-- [archive-wasm](modules/archive_wasm.md)
-- [archive-wasm/src/fs.mjs](modules/archive_wasm_src_fs_mjs.md)
+- [archive-wasm](archive-wasm/README.md)
+- [archive-wasm/src/fs.mjs](archive-wasm/src/fs.mjs/README.md)

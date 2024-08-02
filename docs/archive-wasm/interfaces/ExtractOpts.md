@@ -1,12 +1,14 @@
-# Interface: ExtractOpts\<\>
+[**archive-wasm**](../../README.md) • **Docs**
 
-[archive-wasm](../modules/archive_wasm.md).ExtractOpts
+---
+
+# Interface: ExtractOpts
 
 ## Properties
 
 ### encoding
 
-• **encoding**: `undefined` \| `string`
+> **encoding**: `undefined` \| `string`
 
 Encoding to be used to parse entry's metada. Defaults to 'utf8'
 
@@ -14,7 +16,7 @@ Encoding to be used to parse entry's metada. Defaults to 'utf8'
 
 ### ignoreDotDir
 
-• **ignoreDotDir**: `undefined` \| `boolean`
+> **ignoreDotDir**: `undefined` \| `boolean`
 
 Ignore entries for '.' dir. Defaults to true
 
@@ -22,7 +24,7 @@ Ignore entries for '.' dir. Defaults to true
 
 ### passphrase
 
-• **passphrase**: `undefined` \| `string`
+> **passphrase**: `undefined` \| `string`
 
 Passphrase to decrypt protect zip archives
 
@@ -30,6 +32,6 @@ Passphrase to decrypt protect zip archives
 
 ### recursive
 
-• **recursive**: `undefined` \| `boolean`
+> **recursive**: `undefined` \| `boolean`
 
 Recursively extract archives within archives. Defaults to false

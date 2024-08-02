@@ -2,12 +2,18 @@
 
 set -eu
 
+if ! command -v npx 1>/dev/null 2>&1; then
+  echo "npx is not available" >&2
+  exit 1
+fi
+
 __dir="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
 
 _manager="$(
   for manager in docker podman; do
     if command -v "$manager" 1>/dev/null 2>&1; then
       echo "$manager"
+      break
     fi
   done
 )"
@@ -17,19 +23,21 @@ if [ -z "${_manager:-}" ]; then
   exit 1
 fi
 
-_dist="$(CDPATH='' cd "${__dir}/../src" && pwd)"
+_dist="$(CDPATH='' cd "${__dir}/../src/wasm" && pwd)"
 mkdir -p "$_dist"
 
 if [ "$_manager" = 'podman' ]; then
-  $_manager build "$__dir" --jobs 4 --tag archive-wasm:latest --security-opt label=disable --network host --format docker
-else
-  $_manager build "$__dir" --jobs 4 --tag archive-wasm:latest
+  set -- --jobs 4 --security-opt label=disable --format docker
 fi
 
-_id="$($_manager create archive-wasm:latest true)"
-$_manager cp "$_id:/wasm" "${_dist}/"
-$_manager rm -v "$_id"
+case "$(uname -m)" in
+aarch64 | arm64)
+  _arm64='-arm64'
+  ;;
+esac
 
-npx eslint --no-ignore --rule 'jsdoc/require-jsdoc: off' --fix "${_dist}/wasm/libarchive.mjs" >/dev/null || true
-sed -i.bak -e '/export default/d' "${_dist}/wasm/libarchive.mjs"
-rm -f "${_dist}/wasm/libarchive.mjs.bak"
+$_manager build --network host --build-arg ARM="${_arm64:-}" "$@" -o "${_dist}/" "$__dir"
+
+npx eslint --no-ignore --rule 'jsdoc/require-jsdoc: off' --fix "${_dist}/libarchive.mjs" >/dev/null || true
+sed -i.bak -e '/export default/d' "${_dist}/libarchive.mjs"
+rm -f "${_dist}/libarchive.mjs.bak"
