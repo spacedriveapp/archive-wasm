@@ -5,11 +5,14 @@
   "bugs": {
     "url": "https://github.com/spacedriveapp/archive-wasm/issues"
   },
+  "files": [
+    "src/**/*"
+  ],
   "author": "Vítor Vasconcellos",
   "version": "1.7.0",
   "license": "GPL-3.0-or-later",
   "engines": {
-    "node": ">=18"
+    "node": ">=18.4"
   },
   "homepage": "https://github.com/spacedriveapp/archive-wasm#readme",
   "keywords": [
@@ -31,10 +34,11 @@
   "scripts": {
     "predocs": "npm run clean",
     "docs": "typedoc --plugin typedoc-plugin-markdown --hideBreadcrumbs --readme none --githubPages false --disableSources",
-    "prelint": "eslint ./src --ext .js,.ts,.mjs,.d.ts,.d.mts --cache",
+    "prelint": "eslint --cache --max-warnings 0 .",
     "lint": "tsc --noEmit --emitDeclarationOnly false",
-    "preformat": "eslint . --ext .js,.ts,.mjs,.d.ts,.d.mts --cache --rule 'prettier/prettier: off' --max-warnings 0 --fix",
-    "format": "prettier --write --log-level=warn '**/*.{js,ts,mjs,json,d.ts,d.mts,md}'",
+    "lint:fix": "npm run prelint -- --fix",
+    "preformat": "npm run lint:fix -- --rule 'prettier/prettier: off'",
+    "format": "prettier --write .",
     "clean": "git clean -qfX ./src",
     "build:wasm": "./wasm/build.sh",
     "prebuild:js": "npm run prelint",
@@ -61,209 +65,11 @@
       "mjs": true
     }
   },
-  "prettier": {
-    "semi": false,
-    "endOfLine": "lf",
-    "printWidth": 99,
-    "singleQuote": true,
-    "arrowParens": "avoid",
-    "trailingComma": "es5"
-  },
-  "eslintConfig": {
-    "env": {
-      "node": true,
-      "es2022": true,
-      "browser": false,
-      "commonjs": false,
-      "shared-node-browser": false
-    },
-    "rules": {
-      "no-void": [
-        "error",
-        {
-          "allowAsStatement": true
-        }
-      ],
-      "no-proto": "error",
-      "valid-jsdoc": "off",
-      "import/order": [
-        "error",
-        {
-          "alphabetize": {
-            "order": "asc"
-          },
-          "newlines-between": "always"
-        }
-      ],
-      "import/no-unresolved": [
-        2,
-        {
-          "ignore": [
-            "\\libarchive.mjs$"
-          ]
-        }
-      ],
-      "license-header/header": [
-        "error",
-        "PREAMBLE"
-      ],
-      "jsdoc/require-returns-check": "off",
-      "standard/no-callback-literal": "off"
-    },
-    "parser": "@babel/eslint-parser",
-    "plugins": [
-      "@babel",
-      "license-header",
-      "eslint-plugin-local-rules"
-    ],
-    "extends": [
-      "eslint:recommended",
-      "standard",
-      "plugin:import/recommended",
-      "plugin:prettier/recommended",
-      "plugin:jsdoc/recommended-typescript-flavor"
-    ],
-    "settings": {
-      "jsdoc": {
-        "mode": "typescript",
-        "tagNamePreference": {
-          "typicalname": "typicalname"
-        }
-      }
-    },
-    "overrides": [
-      {
-        "files": [
-          "*.mjs"
-        ],
-        "parserOptions": {
-          "babelOptions": {
-            "presets": [
-              [
-                "@babel/preset-env",
-                {
-                  "shippedProposals": true
-                }
-              ]
-            ]
-          }
-        }
-      },
-      {
-        "env": {
-          "node": false,
-          "es2022": true,
-          "shared-node-browser": true
-        },
-        "files": [
-          "src/**/*.mjs"
-        ],
-        "excludedFiles": [
-          "src/fs.mjs",
-          "src/wasm/libarchive.mjs"
-        ]
-      },
-      {
-        "files": [
-          "src/wasm/libarchive.mjs",
-          "src/wasm/libarchive.d.mts"
-        ],
-        "rules": {
-          "license-header/header": "off"
-        }
-      },
-      {
-        "files": [
-          "*.ts",
-          "*.d.ts",
-          "*.d.mts"
-        ],
-        "rules": {
-          "no-void": "off",
-          "@typescript-eslint/no-extra-semi": "off",
-          "@typescript-eslint/unbound-method": [
-            "error",
-            {
-              "ignoreStatic": true
-            }
-          ],
-          "@typescript-eslint/no-explicit-any": [
-            "error",
-            {
-              "fixToUnknown": true
-            }
-          ],
-          "no-use-before-define": "off",
-          "@typescript-eslint/no-use-before-define": [
-            "error",
-            {
-              "ignoreTypeReferences": true
-            }
-          ],
-          "@typescript-eslint/explicit-function-return-type": [
-            "error",
-            {
-              "allowConciseArrowFunctionExpressionsStartingWithVoid": true
-            }
-          ]
-        },
-        "parser": "@typescript-eslint/parser",
-        "plugins": [
-          "@typescript-eslint"
-        ],
-        "extends": [
-          "plugin:@typescript-eslint/recommended",
-          "plugin:@typescript-eslint/recommended-requiring-type-checking",
-          "plugin:@typescript-eslint/strict",
-          "plugin:import/typescript"
-        ],
-        "parserOptions": {
-          "project": "./tsconfig.json"
-        }
-      },
-      {
-        "files": [
-          "*.d.ts",
-          "*.d.mts"
-        ],
-        "rules": {
-          "jsdoc/require-returns": "off",
-          "jsdoc/require-yields-check": "off",
-          "local-rules/disallow-jsdoc-typedef": "error",
-          "padding-line-between-statements": [
-            "error",
-            {
-              "blankLine": "always",
-              "prev": "*",
-              "next": "export"
-            }
-          ]
-        }
-      },
-      {
-        "files": [
-          "src/wasm/enums.d.mts"
-        ],
-        "rules": {
-          "@typescript-eslint/no-unused-vars": "off"
-        }
-      }
-    ],
-    "parserOptions": {
-      "sourceType": "module",
-      "requireConfigFile": false
-    },
-    "ignorePatterns": [
-      "src/wasm/libarchive.mjs"
-    ]
-  },
   "clean-package": {
     "indent": 2,
     "remove": [
       "ava",
       "scripts",
-      "prettier",
-      "eslintConfig",
       "clean-package",
       "devDependencies"
     ]
@@ -272,23 +78,25 @@
     "@babel/core": "^7.25.2",
     "@babel/eslint-parser": "^7.25.1",
     "@babel/eslint-plugin": "^7.25.1",
-    "@babel/preset-env": "^7.25.3",
-    "@types/node": "^22.0.2",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
+    "@babel/plugin-proposal-json-modules": "^7.25.4",
+    "@babel/plugin-syntax-import-attributes": "^7.25.6",
+    "@babel/preset-env": "7.25.4",
+    "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
+    "@types/node": "^18.19.50",
     "ava": "^6.1.3",
     "clean-package": "^2.2.0",
-    "concurrently": "^8.2.2",
-    "eslint": "^8.57.0",
+    "concurrently": "^9.0.1",
+    "eslint": "^9.10.0",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-jsdoc": "^48.10.2",
+    "eslint-plugin-jsdoc": "^50.2.2",
     "eslint-plugin-license-header": "^0.6.1",
     "eslint-plugin-local-rules": "^3.0.2",
     "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^15.9.0",
+    "neostandard": "^0.11.4",
     "prettier": "3.3.3",
-    "typedoc": "^0.26.5",
-    "typedoc-plugin-markdown": "^4.2.3",
-    "typescript": "^5.5.4"
+    "typedoc": "^0.26.7",
+    "typedoc-plugin-markdown": "^4.2.7",
+    "typescript": "^5.6.2"
   }
 }

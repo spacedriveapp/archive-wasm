@@ -18,7 +18,7 @@
 
 'use strict'
 
-module.exports = {
+module.exports = /** @type { Record<string, import('eslint').Rule.RuleModule> } */ ({
   'disallow-jsdoc-typedef': {
     meta: {
       type: 'problem',
@@ -48,4 +48,4 @@ module.exports = {
       }
     },
   },
-}
+})

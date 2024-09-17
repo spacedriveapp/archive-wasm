@@ -1,0 +1,11 @@
+{
+  "plugins": ["@babel/plugin-syntax-import-attributes", "@babel/plugin-proposal-json-modules"],
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "shippedProposals": true
+      }
+    ]
+  ]
+}

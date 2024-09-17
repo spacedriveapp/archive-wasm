@@ -21,18 +21,16 @@ import * as fs from 'node:fs'
 import { tmpdir } from 'node:os'
 import * as path from 'node:path'
 
-// https://github.com/avajs/ava/pull/3128
-// eslint-disable-next-line import/no-unresolved
 import test from 'ava'
 
 import {
+  ArchiveError,
+  disableWarning,
+  ExceedSizeLimitError,
   extract,
   extractAll,
-  disableWarning,
   FileReadError,
   PassphraseError,
-  ArchiveError,
-  ExceedSizeLimitError,
 } from '../src/archive.mjs'
 import { extractTo } from '../src/fs.mjs'
 import { FILETYPE_FLAG } from '../src/wasm/enums.mjs'
@@ -50,18 +48,43 @@ const preambleFileStat = fs.statSync(new URL('../PREAMBLE', import.meta.url), { 
 const gitignoreFile = d.decode(fs.readFileSync(new URL('../.gitignore', import.meta.url)))
 const gitignoreFileStat = fs.statSync(new URL('../.gitignore', import.meta.url), { bigint: true })
 
+/**
+ * @param {import('ava').ExecutionContext<unknown>} t
+ * @param {ReturnType<extract> | import('../src/archive.mjs').Entry[]} entries
+ * @param {number} i
+ * @returns {import('../src/archive.mjs').Entry}
+ */
+const getNextEntry = (t, entries, i) => {
+  const entry = /** @type {import('../src/archive.mjs').Entry} */ (
+    Array.isArray(entries) ? entries[i] : entries.next().value
+  )
+  t.false(entry == null)
+  return entry
+}
+
+/**
+ * @param {import('ava').ExecutionContext<unknown>} t
+ * @param {string} archivePath
+ * @param {string | undefined | import('../src/archive.mjs').ExtractOpts} opts
+ * @param {boolean} mode
+ */
 const licenseCheck = (t, archivePath, opts, mode) => {
   const archiveFile = fs.readFileSync(new URL(archivePath, import.meta.url))
 
+  /** @type { ReturnType<extract> | import('../src/archive.mjs').Entry[] } */
   let entries = extract(archiveFile, opts)
   if (mode) entries = Array.from(entries)
 
   let i = 0
-  for (const [path, data, stat] of [
+  for (const [
+    path,
+    data,
+    stat,
+  ] of /** @type { [string, string, import('node:fs').BigIntStats][]} */ ([
     ['LICENSE.md', licenseFile, licenseFileStat],
     ['PREAMBLE', preambleFile, preambleFileStat],
-  ]) {
-    const entry = mode ? entries[i] : entries.next().value
+  ])) {
+    const entry = getNextEntry(t, entries, i++)
     t.false(entry == null)
     t.is(entry.path, path)
     t.is(entry.size, stat.size)
@@ -76,19 +99,25 @@ const licenseCheck = (t, archivePath, opts, mode) => {
     i++
   }
 
-  t.true((mode ? entries[i] : entries.next().value) == null)
+  t.true(getNextEntry(t, entries, i) == null)
 }
 
+/**
+ * @param {import('ava').ExecutionContext<unknown>} t
+ * @param {string} archivePath
+ * @param {string | undefined | import('../src/archive.mjs').ExtractOpts} opts
+ * @param {boolean} mode
+ */
 const gitignoreCheck = (t, archivePath, opts, mode) => {
   const archiveFile = fs.readFileSync(new URL(archivePath, import.meta.url))
 
+  /** @type { ReturnType<extract> | import('../src/archive.mjs').Entry[] } */
   let entries = extract(archiveFile, opts)
   if (mode) entries = Array.from(entries)
 
   let i = 0
 
-  let entry = mode ? entries[i++] : entries.next().value
-  t.false(entry == null)
+  let entry = getNextEntry(t, entries, i++)
   t.is(entry.path, '.gitignore')
   t.is(entry.size, gitignoreFileStat.size)
   t.is(entry.perm, ~FILETYPE_FLAG & Number(gitignoreFileStat.mode))
@@ -96,17 +125,16 @@ const gitignoreCheck = (t, archivePath, opts, mode) => {
   t.is(entry.link, null)
   t.is(d.decode(entry.data), gitignoreFile)
 
-  entry = mode ? entries[i++] : entries.next().value
-  t.false(entry == null)
+  entry = getNextEntry(t, entries, i++)
   t.is(entry.path, '.prettierignore')
   t.is(entry.type, 'SYMBOLIC_LINK')
   t.is(entry.link, '.gitignore')
   t.is(entry.data.byteLength, 0)
 
-  t.true((mode ? entries[i] : entries.next().value) == null)
+  t.true((Array.isArray(entries) ? entries[i] : entries.next().value) == null)
 }
 
-for (let archive of [
+for (let archive of /** @type { (string | [string, string])[] } */ ([
   'license.7z',
   'license.rar',
   'license.tgz',
@@ -120,7 +148,8 @@ for (let archive of [
   'license.tar.zst',
   'license.tar.lz4',
   ['license.encrypted.zip', '12345678'],
-]) {
+])) {
+  /** @type { undefined | string } */
   let passphrase
   if (Array.isArray(archive)) [archive, passphrase] = archive
   test(`Test ${archive} with out of loop access`, async t =>
@@ -133,7 +162,7 @@ for (let archive of [
     licenseCheck(t, archive, { passphrase, recursive: true }, false))
 }
 
-for (let archive of [
+for (let archive of /** @type { (string | [string, string])[] } */ ([
   'gitignore.7z',
   'gitignore.rar',
   'gitignore.tgz',
@@ -148,7 +177,8 @@ for (let archive of [
   'gitignore.tar.lz4',
   // https://github.com/libarchive/libarchive/issues/1984
   // ['gitignore.encrypted.zip', '12345678'],
-]) {
+])) {
+  /** @type { undefined | string } */
   let passphrase
   if (Array.isArray(archive)) [archive, passphrase] = archive
   test(`Test ${archive} with out of loop access`, async t =>
@@ -193,7 +223,7 @@ test('Test GBK.zip', t => {
   t.deepEqual(names, GBK_PATHS)
 })
 
-const IELPKTH_MD5 = {
+const IELPKTH_MD5 = /** @type {Record<string, string>} */ ({
   'CHARSET.DAT': '3e7eb76bb122e29a5b60902d0caad598',
   'TH.INF': 'f4fd1cc76da571d4dbd94bd3d6dd3caa',
   'kbdth1.dll': '2dffc32410bbd169a3fba56fd08cf2e5',
@@ -208,14 +238,15 @@ const IELPKTH_MD5 = {
   'unTH.INF': 'deb2b5d83062730eb768cd5992f28176',
   'langinst.exe': 'e5c8c7250d57cef16cb1581904ed6209',
   'csseqchk.dll': '5db2f9eda2fb505e77b3e634b6202f52',
-}
+})
 
 test('Test IELPKTH.CAB', t => {
   // from: https://github.com/iamtraction/ZOD
   const archiveFile = fs.readFileSync(new URL('IELPKTH.CAB', import.meta.url))
 
   for (const entry of extract(archiveFile)) {
-    const md5 = IELPKTH_MD5[entry.path]
+    t.assert(entry.path != null)
+    const md5 = IELPKTH_MD5[/** @type {string} */ (entry.path)]
     t.assert(typeof md5 === 'string')
 
     const hashFunc = createHash('md5')
@@ -258,10 +289,10 @@ test('Test accessing entries in-loop and outside should work', t => {
   const outsideLoop = Array.from(extract(archiveFile))
 
   for (let i = 0; i < inLoop.length; ++i) {
-    t.is(inLoop[i].path, outsideLoop[i].path)
-    t.is(inLoop[i].size, outsideLoop[i].size)
-    t.is(inLoop[i].mode, outsideLoop[i].mode)
-    t.deepEqual(inLoop[i].data, outsideLoop[i].data)
+    t.is(inLoop[i]?.path, outsideLoop[i]?.path)
+    t.is(inLoop[i]?.size, outsideLoop[i]?.size)
+    t.is(inLoop[i]?.perm, outsideLoop[i]?.perm)
+    t.deepEqual(inLoop[i]?.data, outsideLoop[i]?.data)
   }
 })
 
@@ -269,12 +300,12 @@ test("Test extract's ignoreDotDir option", t => {
   const archiveFile = fs.readFileSync(new URL('license.iso', import.meta.url))
   let iter = extract(archiveFile, { ignoreDotDir: false })
   let entry = iter.next().value
-  t.is(entry.path, '.')
-  t.is(entry.type, 'DIR')
+  t.is(entry?.path, '.')
+  t.is(entry?.type, 'DIR')
 
   iter = extract(archiveFile, { ignoreDotDir: true })
   entry = iter.next().value
-  t.not(entry.path, '.')
+  t.not(entry?.path, '.')
 })
 
 test('Test Spacedrive native-deps', async t => {

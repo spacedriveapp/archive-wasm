@@ -6,7 +6,7 @@
 
 > **extract**(`data`, `opts`?): `Generator`\<[`Entry`](../interfaces/Entry.md), `void`, `void`\>
 
-Uncompress archive and iterate through all it's entries
+Extract archive and iterate through all it's entries
 
 ## Parameters
 

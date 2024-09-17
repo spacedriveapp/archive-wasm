@@ -20,7 +20,7 @@ type StringToType<R> = R extends Emscripten.JSType
     }[R]
   : never
 
-type ArgsToType<T extends Array<Emscripten.JSType | null>> = Extract<
+type ArgsToType<T extends (Emscripten.JSType | null)[]> = Extract<
   {
     [P in keyof T]: StringToType<T[P]>
   },
@@ -38,13 +38,13 @@ export const wasm: {
   calledRun: boolean
   thisProgram: string
 
-  cwrap<I extends Array<Emscripten.JSType | null> | [], R extends Emscripten.JSType | null>(
+  cwrap<I extends (Emscripten.JSType | null)[] | [], R extends Emscripten.JSType | null>(
     ident: string,
     returnType: R,
     argTypes: I,
     opts?: Emscripten.CCallOpts
   ): (...arg: ArgsToType<I>) => ReturnToType<R>
-  ccall<I extends Array<Emscripten.JSType | null> | [], R extends Emscripten.JSType | null>(
+  ccall<I extends (Emscripten.JSType | null)[] | [], R extends Emscripten.JSType | null>(
     ident: string,
     returnType: R,
     argTypes: I,

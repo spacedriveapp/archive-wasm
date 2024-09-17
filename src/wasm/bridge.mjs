@@ -23,17 +23,17 @@
 
 import { ReturnCode } from './enums.mjs'
 import {
-  EPASS,
-  ENULL,
   ARCHIVE_ERRNO_MISC,
-  RetryError,
-  FatalError,
-  PassphraseError,
-  FailedError,
+  ARCHIVE_ERRNO_PROGRAMMER_ERROR,
   ArchiveError,
+  ENULL,
+  EPASS,
+  FailedError,
+  FatalError,
   FileReadError,
   NullError,
-  ARCHIVE_ERRNO_PROGRAMMER_ERROR,
+  PassphraseError,
+  RetryError,
 } from './errors.mjs'
 import { wasm } from './libarchive.mjs'
 import { Pointer } from './pointer.mjs'
@@ -82,9 +82,7 @@ const getErrorCode = /** @type {getErrorCodeCb} */ (
  * @callback clearErrorCb
  * @param {number} archive Pointer to archive struct
  */
-const clearError = /** @type {clearErrorCb} */ (
-  wasm.cwrap('archive_clear_error', null, ['number'])
-)
+const clearError = /** @type {clearErrorCb} */ (wasm.cwrap('archive_clear_error', null, ['number']))
 
 /**
  * Wrap calls that interact with archive to do erro checking/clean-up

@@ -6,7 +6,7 @@
 
 > **extractAll**(`data`, `opts`?): [`Entry`](../interfaces/Entry.md)[]
 
-Uncompress all entries in an archive
+Extract all entries in an archive
 
 > This function is the preferred choice over `extract` when your use case
 > involves accessing the content data of all entries within the archive,

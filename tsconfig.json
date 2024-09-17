@@ -4,13 +4,13 @@
     "entryPoints": ["src/archive.mjs", "src/fs.mjs"]
   },
   "compilerOptions": {
-    "lib": ["ES2023"],
+    "lib": ["ESNext"],
     "outDir": "src",
     "strict": true,
     "checkJs": true,
     "allowJs": true,
-    "module": "esnext",
-    "target": "esnext",
+    "module": "NodeNext",
+    "target": "ESNext",
     "declaration": true,
     "incremental": true,
     "skipLibCheck": true,
@@ -19,7 +19,7 @@
     "isolatedModules": true,
     "esModuleInterop": false,
     "disableSizeLimit": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "noImplicitReturns": true,
     "resolveJsonModule": true,
     "noUnusedParameters": true,
@@ -27,11 +27,18 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"],
+  "include": ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.d.mts", "**/*.d.cts"],
+  "exclude": [
+    "node_modules",
+    "coverage",
+    "eslint.config.mjs",
+    "eslint-local-rules.cjs",
+    "prettier.config.mjs"
+  ],
   "$schema": "https://json.schemastore.org/tsconfig"
 }
