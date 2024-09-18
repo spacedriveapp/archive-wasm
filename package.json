@@ -42,7 +42,7 @@
     "clean": "git clean -qfX ./src",
     "build:wasm": "./wasm/build.sh",
     "prebuild:js": "npm run prelint",
-    "build:js": "tsc",
+    "build:js": "tsc --build --force",
     "postbuild:js": "npm run format",
     "prebuild": "npm run docs",
     "build": "conc -c auto --timings --kill-others-on-fail 'npm:build:*'",
