@@ -22,29 +22,29 @@
  */
 
 import {
-  WARNING,
-  openArchive,
-  getFileData,
-  getEntrySize,
   closeArchive,
-  getNextEntry,
-  getEntryMode,
   getEntryAtime,
-  getEntryMtime,
-  getEntryCtime,
-  getEntryPathName,
   getEntryBirthtime,
-  getEntrySymlink,
+  getEntryCtime,
   getEntryHardlink,
+  getEntryMode,
+  getEntryMtime,
+  getEntryPathName,
+  getEntrySize,
+  getEntrySymlink,
+  getFileData,
+  getNextEntry,
+  openArchive,
+  WARNING,
 } from './wasm/bridge.mjs'
 import { EntryTypeName, FILETYPE_FLAG } from './wasm/enums.mjs'
 import {
-  ENULL,
-  NullError,
-  ArchiveError,
-  FileReadError,
-  ExceedSizeLimitError,
   ARCHIVE_ERRNO_FILE_FORMAT,
+  ArchiveError,
+  ENULL,
+  ExceedSizeLimitError,
+  FileReadError,
+  NullError,
 } from './wasm/errors.mjs'
 import { Pointer } from './wasm/pointer.mjs'
 
@@ -66,14 +66,14 @@ import { Pointer } from './wasm/pointer.mjs'
 /**
  * Options for {@link extract}
  * @typedef {object} ExtractOpts
- * @property {string} [encoding] Encoding to be used to parse entry's metada. Defaults to 'utf8'
+ * @property {string} [encoding] Encoding to be used to parse entry's metadata. Defaults to 'utf8'
  * @property {string} [passphrase] Passphrase to decrypt protect zip archives
  * @property {boolean} [recursive] Recursively extract archives within archives. Defaults to false
  * @property {boolean} [ignoreDotDir] Ignore entries for '.' dir. Defaults to true
  */
 
 /**
- * Uncompress archive and iterate through all it's entries
+ * Extract archive and iterate through all it's entries
  * @param {ArrayBufferLike} data Archive's data
  * @param {string | ExtractOpts} [opts] Extract options, string value will be interpreted as password
  * @yields {Entry}
@@ -186,7 +186,9 @@ export function* extract(data, opts) {
           Object.defineProperty(entry, 'data', {
             get: () => {
               if (WARNING)
-                console.warn("Accessing entry's data after the extract loop is not performatic")
+                console.warn(
+                  "Accessing entry's data after the extract loop results in worse performance"
+                )
               $archive = openArchive(buffer, passphrase)
               try {
                 while (--skips >= 0) {
@@ -225,7 +227,7 @@ export function* extract(data, opts) {
  */
 
 /**
- * Uncompress all entries in an archive
+ * Extract all entries in an archive
  *
  * > This function is the preferred choice over `extract` when your use case
  *   involves accessing the content data of all entries within the archive,

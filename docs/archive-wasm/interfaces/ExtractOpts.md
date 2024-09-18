@@ -10,7 +10,7 @@
 
 > **encoding**: `undefined` \| `string`
 
-Encoding to be used to parse entry's metada. Defaults to 'utf8'
+Encoding to be used to parse entry's metadata. Defaults to 'utf8'
 
 ---
 

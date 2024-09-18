@@ -4,11 +4,13 @@
   "explorer.fileNesting.patterns": {
     "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
     "*.mjs": "${capture}.mjs.map, ${capture}.min.mjs, ${capture}.d.mts",
+    "*.cjs": "${capture}.cjs.map, ${capture}.min.cjs, ${capture}.d.cts",
     ".npmrc": ".nvmrc, .yarnrc.yml",
     ".gitignore": ".eslintignore, .prettierignore",
     "README.md": "CONTRIBUTING.md, CODE_OF_CONDUCT.md",
     "LICENSE.md": "PREAMBLE",
     "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, pnpm-workspace.yaml, .pnp.cjs, .pnp.loader.mjs, .eslintcache",
     "tsconfig.json": "tsconfig.*.json"
-  }
+  },
+  "cSpell.words": ["ENULL", "Hardlink", "Spacedrive"]
 }
