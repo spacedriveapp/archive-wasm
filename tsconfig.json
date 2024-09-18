@@ -5,7 +5,6 @@
   },
   "compilerOptions": {
     "lib": ["ESNext"],
-    "outDir": "src",
     "strict": true,
     "checkJs": true,
     "allowJs": true,

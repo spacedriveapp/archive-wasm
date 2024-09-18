@@ -3,15 +3,9 @@
 ARG ARM=''
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
-FROM docker.io/emscripten/emsdk:3.1.64${ARM} as base
+FROM docker.io/emscripten/emsdk:3.1.67${ARM} as base
 
 SHELL ["/bin/bash", "-euxc"]
-
-# Work around bug in emscripten 3.1.62+, introduced in https://github.com/emscripten-core/emscripten/pull/21379
-# 	that makes the compilation of libarchive fail with the following error:
-# 	error: undefined symbol: __secs_to_zone (referenced by root reference (e.g. compiled C/C++ code))
-COPY fix_tz.patch /root/
-RUN patch -F5 -lp1 -d / -t </root/fix_tz.patch
 
 RUN apt-get update -y && apt-get install -y pkg-config
 
@@ -31,10 +25,10 @@ WORKDIR /src
 FROM base as mbedtls
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz \
+RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.1.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
-RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls-framework/archive/750634d3a51eb9d61b59fd5d801546927c946588.tar.gz \
+RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls-framework/archive/94599c0e3b5036e086446a51a3f79640f70f22f6.tar.gz \
 	| tar -xzf- -C /src/framework --strip-components 1
 
 # Fix bug with newer compilers due to missing \emptydescription
@@ -160,7 +154,7 @@ FROM base as libarchive
 ARG SYSROOT
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.4/libarchive-3.7.4.tar.xz \
+RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.5/libarchive-3.7.5.tar.xz \
 	| tar -xJf- -C /src --strip-components 1
 
 # Patch to disable grzip and lrzip

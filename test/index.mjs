@@ -33,7 +33,7 @@ import {
   PassphraseError,
 } from '../src/archive.mjs'
 import { extractTo } from '../src/fs.mjs'
-import { FILETYPE_FLAG } from '../src/wasm/enums.mjs'
+import { EntryType, EntryTypeName, FILETYPE_FLAG } from '../src/wasm/enums.mjs'
 
 // The parent directory for the new temporary directory
 const tmpDir = tmpdir()
@@ -52,13 +52,14 @@ const gitignoreFileStat = fs.statSync(new URL('../.gitignore', import.meta.url),
  * @param {import('ava').ExecutionContext<unknown>} t
  * @param {ReturnType<extract> | import('../src/archive.mjs').Entry[]} entries
  * @param {number} i
+ * @param {boolean} [nullCheck]
  * @returns {import('../src/archive.mjs').Entry}
  */
-const getNextEntry = (t, entries, i) => {
+const getNextEntry = (t, entries, i, nullCheck = true) => {
   const entry = /** @type {import('../src/archive.mjs').Entry} */ (
     Array.isArray(entries) ? entries[i] : entries.next().value
   )
-  t.false(entry == null)
+  if (nullCheck) t.assert(entry != null)
   return entry
 }
 
@@ -85,21 +86,19 @@ const licenseCheck = (t, archivePath, opts, mode) => {
     ['PREAMBLE', preambleFile, preambleFileStat],
   ])) {
     const entry = getNextEntry(t, entries, i++)
-    t.false(entry == null)
     t.is(entry.path, path)
     t.is(entry.size, stat.size)
     t.is(entry.perm, ~FILETYPE_FLAG & Number(stat.mode))
-    t.is(entry.type, 'FILE')
+    t.is(entry.type, EntryTypeName[EntryType.FILE] ?? null)
     t.is(entry.link, null)
     t.is(d.decode(entry.data), data)
     t.true(entry.atime >= 0n)
     t.true(entry.ctime >= 0n)
     t.true(entry.mtime >= 0n)
     t.true(entry.birthtime >= 0n)
-    i++
   }
 
-  t.true(getNextEntry(t, entries, i) == null)
+  t.true(getNextEntry(t, entries, i, false) == null)
 }
 
 /**
@@ -121,17 +120,17 @@ const gitignoreCheck = (t, archivePath, opts, mode) => {
   t.is(entry.path, '.gitignore')
   t.is(entry.size, gitignoreFileStat.size)
   t.is(entry.perm, ~FILETYPE_FLAG & Number(gitignoreFileStat.mode))
-  t.is(entry.type, 'FILE')
+  t.is(entry.type, EntryTypeName[EntryType.FILE] ?? null)
   t.is(entry.link, null)
   t.is(d.decode(entry.data), gitignoreFile)
 
   entry = getNextEntry(t, entries, i++)
   t.is(entry.path, '.prettierignore')
-  t.is(entry.type, 'SYMBOLIC_LINK')
+  t.is(entry.type, EntryTypeName[EntryType.SYMBOLIC_LINK] ?? null)
   t.is(entry.link, '.gitignore')
   t.is(entry.data.byteLength, 0)
 
-  t.true((Array.isArray(entries) ? entries[i] : entries.next().value) == null)
+  t.true(getNextEntry(t, entries, i, false) == null)
 }
 
 for (let archive of /** @type { (string | [string, string])[] } */ ([
@@ -301,7 +300,7 @@ test("Test extract's ignoreDotDir option", t => {
   let iter = extract(archiveFile, { ignoreDotDir: false })
   let entry = iter.next().value
   t.is(entry?.path, '.')
-  t.is(entry?.type, 'DIR')
+  t.is(entry?.type, EntryTypeName[EntryType.DIR] ?? null)
 
   iter = extract(archiveFile, { ignoreDotDir: true })
   entry = iter.next().value

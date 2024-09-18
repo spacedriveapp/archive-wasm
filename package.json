@@ -9,7 +9,7 @@
     "src/**/*"
   ],
   "author": "Vítor Vasconcellos",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18.4"
@@ -46,7 +46,6 @@
     "postbuild:js": "npm run format",
     "prebuild": "npm run docs",
     "build": "conc -c auto --timings --kill-others-on-fail 'npm:build:*'",
-    "postbuild": "npm run format",
     "test": "test/setupAndRun.sh",
     "prebuildtest": "npm run build",
     "buildtest": "npm run test",
@@ -88,12 +87,12 @@
     "concurrently": "^9.0.1",
     "eslint": "^9.10.0",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-jsdoc": "^50.2.2",
+    "eslint-plugin-jsdoc": "^50.2.3",
     "eslint-plugin-license-header": "^0.6.1",
     "eslint-plugin-local-rules": "^3.0.2",
     "eslint-plugin-prettier": "^5.2.1",
     "globals": "^15.9.0",
-    "neostandard": "^0.11.4",
+    "neostandard": "^0.11.5",
     "prettier": "3.3.3",
     "typedoc": "^0.26.7",
     "typedoc-plugin-markdown": "^4.2.7",
