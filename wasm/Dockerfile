@@ -25,7 +25,7 @@ WORKDIR /src
 FROM base as mbedtls
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.1.tar.gz \
+RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.2.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
 RUN curl -fsSL https://github.com/Mbed-TLS/mbedtls-framework/archive/94599c0e3b5036e086446a51a3f79640f70f22f6.tar.gz \
@@ -96,7 +96,7 @@ RUN emmake make install
 FROM base as lzma
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/tukaani-project/xz/releases/download/v5.6.2/xz-5.6.2.tar.xz \
+RUN curl -fsSL https://github.com/tukaani-project/xz/releases/download/v5.6.4/xz-5.6.4.tar.xz \
 	| tar -xJf- -C /src --strip-components 1
 
 # Compile & install
@@ -128,7 +128,7 @@ RUN emmake make install
 FROM base as zstd
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/facebook/zstd/releases/download/v1.5.6/zstd-1.5.6.tar.gz \
+RUN curl -fsSL https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz \
 	| tar -xzf- -C /src --strip-components 1
 
 # Compile & install
@@ -154,7 +154,7 @@ FROM base as libarchive
 ARG SYSROOT
 
 # Download & de-compress
-RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.5/libarchive-3.7.5.tar.xz \
+RUN curl -fsSL https://github.com/libarchive/libarchive/releases/download/v3.7.7/libarchive-3.7.7.tar.xz \
 	| tar -xJf- -C /src --strip-components 1
 
 # Patch to disable grzip and lrzip
