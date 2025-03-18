@@ -1,4 +1,4 @@
-**archive-wasm** • **Docs**
+**archive-wasm**
 
 ---
 

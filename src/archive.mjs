@@ -60,7 +60,7 @@ import { Pointer } from './wasm/pointer.mjs'
  * @property {bigint} ctime The timestamp indicating the last time the file status was changed expressed in nanoseconds since the POSIX Epoch
  * @property {bigint} mtime The timestamp indicating the last time this file was modified expressed in nanoseconds since the POSIX Epoch
  * @property {bigint} birthtime The timestamp indicating the creation time of this file expressed in nanoseconds since the POSIX Epoch
- * @property {ArrayBufferLike} data An `ArrayBuffer` containing the entry's data
+ * @property {ArrayBuffer} data An `ArrayBuffer` containing the entry's data
  */
 
 /**
@@ -74,7 +74,7 @@ import { Pointer } from './wasm/pointer.mjs'
 
 /**
  * Extract archive and iterate through all it's entries
- * @param {ArrayBufferLike} data Archive's data
+ * @param {ArrayBufferView | ArrayBufferLike} data Archive's data
  * @param {string | ExtractOpts} [opts] Extract options, string value will be interpreted as password
  * @yields {Entry}
  * @returns {Generator.<Entry, void, void>} Generator that iterate through all of the archive's entries
@@ -236,7 +236,7 @@ export function* extract(data, opts) {
  *   required to support random-time access to an entry's data within
  *   LibArchive's streaming process model. If your goal is to process all
  *   entries and retrieve their content, `extractAll` is the recommended method
- * @param {ArrayBufferLike} data Archive's data
+ * @param {ArrayBufferView | ArrayBufferLike} data Archive's data
  * @param {string | ExtractAllOpts} [opts] Extract options, string value will be interpreted as password
  * @returns {Entry[]} List with all entries included in the archive
  */

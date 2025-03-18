@@ -33,7 +33,7 @@ type ReturnToType<R extends Emscripten.JSType | null> = R extends null
 
 export const wasm: {
   HEAP8: Int8Array
-  HEAP_DATA_VIEW: DataView
+  HEAP_DATA_VIEW: DataView<ArrayBuffer>
 
   calledRun: boolean
   thisProgram: string

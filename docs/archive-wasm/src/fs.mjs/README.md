@@ -1,4 +1,4 @@
-[**archive-wasm**](../../../README.md) • **Docs**
+[**archive-wasm**](../../../README.md)
 
 ---
 
@@ -8,16 +8,14 @@
 
 Utilities for extracting archives to disk using NodeJS's fs API
 
-## Index
-
-### Interfaces
+## Interfaces
 
 - [ExtractToExclusiveOpts](interfaces/ExtractToExclusiveOpts.md)
 
-### Type Aliases
+## Type Aliases
 
 - [ExtractToOpts](type-aliases/ExtractToOpts.md)
 
-### Functions
+## Functions
 
 - [extractTo](functions/extractTo.md)

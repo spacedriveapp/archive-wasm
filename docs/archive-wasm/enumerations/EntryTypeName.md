@@ -1,4 +1,4 @@
-[**archive-wasm**](../../README.md) • **Docs**
+[**archive-wasm**](../../README.md)
 
 ---
 

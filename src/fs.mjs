@@ -143,7 +143,7 @@ async function hardlink(filePath, link, perm, atime, mtime, overwrite) {
 /**
  * @private
  * @param {string} filePath File path
- * @param {ArrayBufferLike} data File data to be written
+ * @param {ArrayBuffer} data File data to be written
  * @param {number} perm File perm
  * @param {bigint} atime File atime
  * @param {bigint} mtime File mtime
@@ -181,7 +181,7 @@ async function writeFile(filePath, data, perm, atime, mtime, overwrite) {
  * > Only files, directories, symlinks and hardlinks are supported.
  *   Any extra entry type, or invalid entry, in the archive will be skipped (with a warning printed to console)
  *   This function throws if it attempts to overwrite any existing file
- * @param {ArrayBufferLike} data Archive's data
+ * @param {ArrayBufferView | ArrayBufferLike} data Archive's data
  * @param {string} out Path where the archive entries will be extracted to
  * @param {string | ExtractToOpts} [opts] Extract options, string value will be interpreted as password
  */

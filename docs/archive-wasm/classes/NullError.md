@@ -1,4 +1,4 @@
-[**archive-wasm**](../../README.md) • **Docs**
+[**archive-wasm**](../../README.md)
 
 ---
 
@@ -12,21 +12,23 @@
 
 ### new NullError()
 
-> **new NullError**(`message`?): [`NullError`](NullError.md)
+> **new NullError**(`message`?): `NullError`
 
 #### Parameters
 
-• **message?**: `string`
+##### message?
+
+`string`
 
 Error message
 
 #### Returns
 
-[`NullError`](NullError.md)
+`NullError`
 
 #### Overrides
 
-[`ArchiveError`](ArchiveError.md).[`constructor`](ArchiveError.md#constructors)
+[`ArchiveError`](ArchiveError.md).[`constructor`](ArchiveError.md#constructor)
 
 ## Properties
 
@@ -88,9 +90,13 @@ Optional override for formatting stack traces
 
 #### Parameters
 
-• **err**: `Error`
+##### err
 
-• **stackTraces**: `CallSite`[]
+`Error`
+
+##### stackTraces
+
+`CallSite`[]
 
 #### Returns
 
@@ -124,9 +130,13 @@ Create .stack property on a target object
 
 #### Parameters
 
-• **targetObject**: `object`
+##### targetObject
 
-• **constructorOpt?**: `Function`
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 

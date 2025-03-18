@@ -1,4 +1,4 @@
-[**archive-wasm**](../../README.md) • **Docs**
+[**archive-wasm**](../../README.md)
 
 ---
 
@@ -32,7 +32,7 @@ The timestamp indicating the last time the file status was changed expressed in 
 
 ### data
 
-> **data**: `ArrayBufferLike`
+> **data**: `ArrayBuffer`
 
 An `ArrayBuffer` containing the entry's data
 

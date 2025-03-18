@@ -1,9 +1,9 @@
-[**archive-wasm**](../../../../README.md) • **Docs**
+[**archive-wasm**](../../../../README.md)
 
 ---
 
 # Type Alias: ExtractToOpts
 
-> **ExtractToOpts**\<\>: [`archive-wasm`](../../../README.md) & [`ExtractToExclusiveOpts`](../interfaces/ExtractToExclusiveOpts.md)
+> **ExtractToOpts**\<\> = [`ExtractAllOpts`](../../../type-aliases/ExtractAllOpts.md) & [`ExtractToExclusiveOpts`](../interfaces/ExtractToExclusiveOpts.md)
 
 ## Type Parameters

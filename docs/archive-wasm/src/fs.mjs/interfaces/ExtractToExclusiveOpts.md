@@ -1,4 +1,4 @@
-[**archive-wasm**](../../../../README.md) • **Docs**
+[**archive-wasm**](../../../../README.md)
 
 ---
 
@@ -6,24 +6,24 @@
 
 ## Properties
 
-### chmod
+### chmod?
 
-> **chmod**: `undefined` \| `number`
+> `optional` **chmod**: `number`
 
 Permission flag to be AND'ed to all extracted entires permissions (The oposite of umask)
 
 ---
 
-### overwrite
+### overwrite?
 
-> **overwrite**: `undefined` \| `boolean`
+> `optional` **overwrite**: `boolean`
 
 Allow overwriting files
 
 ---
 
-### sizeLimit
+### sizeLimit?
 
-> **sizeLimit**: `undefined` \| `null` \| `bigint`
+> `optional` **sizeLimit**: `null` \| `bigint`
 
 Limit the total byte size of data to be extracted to avoid memory exhaustion, null means no limit (default: 128MB)

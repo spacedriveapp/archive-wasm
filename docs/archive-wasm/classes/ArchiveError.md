@@ -1,4 +1,4 @@
-[**archive-wasm**](../../README.md) • **Docs**
+[**archive-wasm**](../../README.md)
 
 ---
 
@@ -22,23 +22,27 @@
 
 ### new ArchiveError()
 
-> **new ArchiveError**(`code`, `message`?): [`ArchiveError`](ArchiveError.md)
+> **new ArchiveError**(`code`, `message`?): `ArchiveError`
 
 Main error class
 
 #### Parameters
 
-• **code**: `number`
+##### code
+
+`number`
 
 Error code
 
-• **message?**: `string`
+##### message?
+
+`string`
 
 Error message
 
 #### Returns
 
-[`ArchiveError`](ArchiveError.md)
+`ArchiveError`
 
 #### Overrides
 
@@ -100,9 +104,13 @@ Optional override for formatting stack traces
 
 #### Parameters
 
-• **err**: `Error`
+##### err
 
-• **stackTraces**: `CallSite`[]
+`Error`
+
+##### stackTraces
+
+`CallSite`[]
 
 #### Returns
 
@@ -136,9 +144,13 @@ Create .stack property on a target object
 
 #### Parameters
 
-• **targetObject**: `object`
+##### targetObject
 
-• **constructorOpt?**: `Function`
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 

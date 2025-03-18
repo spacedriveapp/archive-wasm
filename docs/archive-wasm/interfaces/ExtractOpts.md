@@ -1,4 +1,4 @@
-[**archive-wasm**](../../README.md) • **Docs**
+[**archive-wasm**](../../README.md)
 
 ---
 
@@ -6,32 +6,32 @@
 
 ## Properties
 
-### encoding
+### encoding?
 
-> **encoding**: `undefined` \| `string`
+> `optional` **encoding**: `string`
 
 Encoding to be used to parse entry's metadata. Defaults to 'utf8'
 
 ---
 
-### ignoreDotDir
+### ignoreDotDir?
 
-> **ignoreDotDir**: `undefined` \| `boolean`
+> `optional` **ignoreDotDir**: `boolean`
 
 Ignore entries for '.' dir. Defaults to true
 
 ---
 
-### passphrase
+### passphrase?
 
-> **passphrase**: `undefined` \| `string`
+> `optional` **passphrase**: `string`
 
 Passphrase to decrypt protect zip archives
 
 ---
 
-### recursive
+### recursive?
 
-> **recursive**: `undefined` \| `boolean`
+> `optional` **recursive**: `boolean`
 
 Recursively extract archives within archives. Defaults to false

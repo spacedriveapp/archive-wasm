@@ -1,4 +1,4 @@
-[**archive-wasm**](../README.md) • **Docs**
+[**archive-wasm**](../README.md)
 
 ---
 
@@ -8,13 +8,11 @@
 
 Idiomatic JavaScript API for extracting most archive files with LibArchive
 
-## Index
-
-### Enumerations
+## Enumerations
 
 - [EntryTypeName](enumerations/EntryTypeName.md)
 
-### Classes
+## Classes
 
 - [ArchiveError](classes/ArchiveError.md)
 - [ExceedSizeLimitError](classes/ExceedSizeLimitError.md)
@@ -25,17 +23,17 @@ Idiomatic JavaScript API for extracting most archive files with LibArchive
 - [PassphraseError](classes/PassphraseError.md)
 - [RetryError](classes/RetryError.md)
 
-### Interfaces
+## Interfaces
 
 - [Entry](interfaces/Entry.md)
 - [ExtractAllExclusiveOpts](interfaces/ExtractAllExclusiveOpts.md)
 - [ExtractOpts](interfaces/ExtractOpts.md)
 
-### Type Aliases
+## Type Aliases
 
 - [ExtractAllOpts](type-aliases/ExtractAllOpts.md)
 
-### Functions
+## Functions
 
 - [disableWarning](functions/disableWarning.md)
 - [extract](functions/extract.md)

@@ -1,4 +1,4 @@
-[**archive-wasm**](../../README.md) • **Docs**
+[**archive-wasm**](../../README.md)
 
 ---
 
@@ -12,25 +12,29 @@
 
 ### new PassphraseError()
 
-> **new PassphraseError**(`code`, `message`?): [`PassphraseError`](PassphraseError.md)
+> **new PassphraseError**(`code`, `message`?): `PassphraseError`
 
 #### Parameters
 
-• **code**: `number`
+##### code
+
+`number`
 
 Error code
 
-• **message?**: `string`
+##### message?
+
+`string`
 
 Error message
 
 #### Returns
 
-[`PassphraseError`](PassphraseError.md)
+`PassphraseError`
 
 #### Overrides
 
-[`ArchiveError`](ArchiveError.md).[`constructor`](ArchiveError.md#constructors)
+[`ArchiveError`](ArchiveError.md).[`constructor`](ArchiveError.md#constructor)
 
 ## Properties
 
@@ -92,9 +96,13 @@ Optional override for formatting stack traces
 
 #### Parameters
 
-• **err**: `Error`
+##### err
 
-• **stackTraces**: `CallSite`[]
+`Error`
+
+##### stackTraces
+
+`CallSite`[]
 
 #### Returns
 
@@ -128,9 +136,13 @@ Create .stack property on a target object
 
 #### Parameters
 
-• **targetObject**: `object`
+##### targetObject
 
-• **constructorOpt?**: `Function`
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 

@@ -1,4 +1,4 @@
-[**archive-wasm**](../../README.md) • **Docs**
+[**archive-wasm**](../../README.md)
 
 ---
 
@@ -6,8 +6,8 @@
 
 ## Properties
 
-### sizeLimit
+### sizeLimit?
 
-> **sizeLimit**: `undefined` \| `null` \| `bigint`
+> `optional` **sizeLimit**: `null` \| `bigint`
 
 Limit the total byte size of data to be extracted to avoid memory exhaustion, null means no limit (default: 128MB)

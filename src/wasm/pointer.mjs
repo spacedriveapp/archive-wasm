@@ -121,7 +121,7 @@ export class Pointer {
    *
    * > When grow is false, this method throws when trying to fill a Pointer.NULL pointer,
    *   otherwise it will realloc the Pointer so it can fit the given data
-   * @param {bigint | number | string | ArrayLike.<number> | ArrayBufferLike} data to copy to memory
+   * @param {bigint | number | string | ArrayLike.<number> | ArrayBufferView | ArrayBufferLike} data to copy to memory
    * @param {boolean} [grow] Wheter to alloc more data to make sure data fits inside {@link Pointer}
    * @returns {Pointer} This pointer
    */
@@ -138,10 +138,16 @@ export class Pointer {
         array = new Uint8Array([data])
         break
       case 'bigint':
-        array = new Uint8Array(new BigInt64Array([data]))
+        array = Uint8Array.from(new BigInt64Array([data]))
         break
       default:
-        if (!(data instanceof Uint8Array)) {
+        if (data instanceof ArrayBuffer) {
+          array = new Uint8Array(data)
+        } else if (ArrayBuffer.isView(data)) {
+          array = new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+        } else if (data instanceof SharedArrayBuffer) {
+          array = new Uint8Array(data)
+        } else if (!(data instanceof Uint8Array)) {
           array = new Uint8Array(data)
         } else {
           array = data
@@ -164,7 +170,7 @@ export class Pointer {
   /**
    * Copy data from WASM memory and return it
    * @param {number} [size] How much to read from memory
-   * @returns {ArrayBufferLike} Memory view
+   * @returns {ArrayBuffer} Memory view
    */
   read(size) {
     if (size == null) {

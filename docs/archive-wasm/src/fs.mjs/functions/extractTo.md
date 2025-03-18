@@ -1,4 +1,4 @@
-[**archive-wasm**](../../../../README.md) • **Docs**
+[**archive-wasm**](../../../../README.md)
 
 ---
 
@@ -14,17 +14,23 @@ Extract all supported archive entries inside a given path
 
 ## Parameters
 
-• **data**: `ArrayBufferLike`
+### data
 
 Archive's data
 
-• **out**: `string`
+`ArrayBufferLike` | `ArrayBufferView`\<`ArrayBufferLike`\>
+
+### out
+
+`string`
 
 Path where the archive entries will be extracted to
 
-• **opts?**: `string` \| [`ExtractToOpts`](../type-aliases/ExtractToOpts.md)
+### opts?
 
 Extract options, string value will be interpreted as password
+
+`string` | [`ExtractToOpts`](../type-aliases/ExtractToOpts.md)
 
 ## Returns
 
