@@ -319,6 +319,71 @@ test('Test Spacedrive native-deps', async t => {
     await extractTo(archiveFile, tempDir)
     t.true(fs.readdirSync(tempDir).length > 0)
   } finally {
+    fs.rmSync(tempDir, { recursive: true })
+  }
+})
+
+test('Test Moddable tools include', async t => {
+  t.timeout(10 * 1000)
+
+  const archiveFile = fs.readFileSync(new URL('moddable-tools-mac64arm.zip ', import.meta.url))
+  const tempDir = fs.mkdtempSync(path.join(tmpDir, 'moddable-tools-'))
+
+  try {
+    await extractTo(archiveFile, tempDir, {
+      included: [/^xs/],
+    })
+
+    const files = fs.readdirSync(tempDir)
+    t.assert(files.length > 0)
+    for (const file of files) {
+      t.true(file.startsWith('xs'))
+    }
+  } finally {
+    fs.rmdirSync(tempDir, { recursive: true })
+  }
+})
+
+test('Test Moddable tools exclude', async t => {
+  t.timeout(10 * 1000)
+
+  const archiveFile = fs.readFileSync(new URL('moddable-tools-mac64arm.zip ', import.meta.url))
+  const tempDir = fs.mkdtempSync(path.join(tmpDir, 'moddable-tools-'))
+
+  try {
+    await extractTo(archiveFile, tempDir, {
+      excluded: [/^xs/],
+    })
+
+    const files = fs.readdirSync(tempDir)
+    t.assert(files.length > 0)
+    for (const file of files) {
+      t.false(file.startsWith('xs'))
+    }
+  } finally {
+    fs.rmdirSync(tempDir, { recursive: true })
+  }
+})
+
+test('Test Moddable tools include ^xs but exclude ^xsbug.app(\\/|$)', async t => {
+  t.timeout(10 * 1000)
+
+  const archiveFile = fs.readFileSync(new URL('moddable-tools-mac64arm.zip ', import.meta.url))
+  const tempDir = fs.mkdtempSync(path.join(tmpDir, 'moddable-tools-'))
+
+  try {
+    await extractTo(archiveFile, tempDir, {
+      included: [/^xs/],
+      excluded: [/^xsbug\.app(\/|$)/],
+    })
+
+    const files = fs.readdirSync(tempDir)
+    t.assert(files.length > 0)
+    for (const file of files) {
+      t.true(file.startsWith('xs'))
+      t.not(file, 'xsbug.app')
+    }
+  } finally {
     fs.rmdirSync(tempDir, { recursive: true })
   }
 })

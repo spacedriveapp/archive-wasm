@@ -169,6 +169,8 @@ async function writeFile(filePath, data, perm, atime, mtime, overwrite) {
  * @property {number} [chmod] Permission flag to be AND'ed to all extracted entires permissions (The oposite of umask)
  * @property {boolean} [overwrite] Allow overwriting files
  * @property {bigint?} [sizeLimit] Limit the total byte size of data to be extracted to avoid memory exhaustion, null means no limit (default: 128MB)
+ * @property {RegExp[]?} [included] List of regex patterns to filter which entries should be extracted
+ * @property {RegExp[]?} [excluded] List of regex patterns to filter which entries should be ignored
  */
 
 /**
@@ -202,6 +204,7 @@ export async function extractTo(data, out, opts) {
     opts.ignoreDotDir = true
   }
 
+  const { included, excluded } = opts && typeof opts === 'object' ? opts : {}
   for (const entry of extractAll(data, opts)) {
     if (entry.path == null) {
       if (WARNING) console.warn('Ignoring empty path entry')
@@ -216,6 +219,21 @@ export async function extractTo(data, out, opts) {
         )
       continue
     }
+
+    if (Array.isArray(included)) {
+      if (included.length === 0) {
+        if (WARNING)
+          console.warn(
+            `No entries will be extracted because the include list is empty, skipping...`
+          )
+        continue
+      }
+
+      if (!included.some(re => re.test(entryPath))) continue
+    }
+
+    if (Array.isArray(excluded) && excluded.some(re => re.test(entryPath))) continue
+
     entryPath = path.resolve(out, entry.path)
 
     const perms = entry.perm | chmod

@@ -73,6 +73,8 @@ download IELPKTH.CAB 'https://master.dl.sourceforge.net/project/corefonts/OldFil
 download GBK.zip 'https://sourceforge.net/p/sevenzip/bugs/2198/attachment/sample.zip'
 # Add spacedrive own native-deps for testing
 download native-deps-x86_64-linux-gnu.tar.xz https://github.com/spacedriveapp/native-deps/releases/latest/download/native-deps-x86_64-linux-gnu.tar.xz
+# Add Moddable tools
+download moddable-tools-mac64arm.zip https://github.com/Moddable-OpenSource/moddable/releases/download/5.5.0/moddable-tools-mac64arm.zip
 
 # Disable macOS unsufferable ._* files being compressed and breaking tests
 export COPYFILE_DISABLE=1

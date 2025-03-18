@@ -14,6 +14,22 @@ Permission flag to be AND'ed to all extracted entires permissions (The oposite o
 
 ---
 
+### excluded?
+
+> `optional` **excluded**: `null` \| `RegExp`[]
+
+List of regex patterns to filter which entries should be ignored
+
+---
+
+### included?
+
+> `optional` **included**: `null` \| `RegExp`[]
+
+List of regex patterns to filter which entries should be extracted
+
+---
+
 ### overwrite?
 
 > `optional` **overwrite**: `boolean`
