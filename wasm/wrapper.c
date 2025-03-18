@@ -17,7 +17,7 @@
 
 #define empty_str(str) (str == NULL || str[0] == '\0')
 
-// https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_support_format_all.c#L81-L88
+// https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_read_support_format_all.c#L31-L88
 void support_format(struct archive *a, int recursive) {
   /*
    * These bidders are all pretty cheap; they just examine a
@@ -61,7 +61,7 @@ void support_format(struct archive *a, int recursive) {
   archive_clear_error(a);
 }
 
-// https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_support_filter_all.c#L77-L84
+// https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_read_support_filter_all.c#L40C1-L84C2
 void support_filter(struct archive *a) {
 
   /* Bzip falls back to "bunzip2" command-line */
@@ -101,7 +101,7 @@ void support_filter(struct archive *a) {
 
 struct archive *open_archive(const void *buf, size_t size,
                              const char *passphrase, int recursive) {
-  // https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read.c#L88-L108
+  // https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_read.c#L87-L107
   struct archive *archive = archive_read_new();
   if (archive == NULL) {
     return NULL;
@@ -118,7 +118,7 @@ struct archive *open_archive(const void *buf, size_t size,
   } else {
     /**
      * ARCHIVE_OK | ARCHIVE_FATAL
-     * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read_add_passphrase.c#L87-L108
+     * https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_read_add_passphrase.c#L86-L107
      */
     if (archive_read_add_passphrase(archive, passphrase) != ARCHIVE_OK) {
       // Return the allocated archive to allow the JS side to read the error
@@ -158,7 +158,7 @@ struct archive_entry *get_next_entry(struct archive *archive) {
   struct archive_entry *entry = NULL;
   /**
    * ARCHIVE_EOF | ARCHIVE_OK | ARCHIVE_WARN | ARCHIVE_RETRY | ARCHIVE_FATAL
-   * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read.c#L649-L670
+   * https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_read.c#L648-L669
    */
   int code = archive_read_next_header(archive, &entry);
   if (code == ARCHIVE_RETRY) {
@@ -209,7 +209,7 @@ void *get_filedata(struct archive *archive, size_t buffsize) {
 
   /**
    * ARCHIVE_RETRY | ARCHIVE_FATAL | number of bytes read (>=0)
-   * https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_read.c#L649-L670
+   * https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_read.c#L648-L669
    */
   int read_size = archive_read_data(archive, buff, buffsize);
   if (read_size < 0) {

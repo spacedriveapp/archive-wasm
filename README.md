@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Archive-Wasm provides a WebAssembly (WASM) version of [LibArchive](https://github.com/libarchive/libarchive/tree/v3.7.2) to be used in NodeJS and Browsers through an idiomatic JS API, that allows you to effortlessly extract data from most of the popular archive formats.
+Archive-Wasm provides a WebAssembly (WASM) version of [LibArchive](https://github.com/libarchive/libarchive/tree/v3.7.7) to be used in NodeJS and Browsers through an idiomatic JS API, that allows you to effortlessly extract data from most of the popular archive formats.
 
 ## Installation
 
@@ -52,7 +52,7 @@ Archive-Wasm supports the same archive formats as the full version of [LibArchiv
 
 ### Encrypted formats
 
-Only encrypted zip is supported in [LibArchive](https://github.com/libarchive/libarchive/blob/v3.7.2/tar/bsdtar.1#L745), other encrypted formats will throw an error during either the decoding step or when trying to read the actual file data, depending on how they implement encryption.
+Only encrypted zip is supported in [LibArchive](https://github.com/libarchive/libarchive/blob/v3.7.7/tar/bsdtar.1#L775), other encrypted formats will throw an error during either the decoding step or when trying to read the actual file data, depending on how they implement encryption.
 
 ## API
 

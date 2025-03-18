@@ -34,7 +34,7 @@
  * ARCHIVE_FAILED	(-25)	// Current operation cannot complete.
  * // But if write_header is "fatal," then this archive is dead and useless.
  * ARCHIVE_FATAL	(-30)	// No more operations are possible.
- * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive.h#L188C1-L200}
+ * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive.h#L186-L198}
  * @private
  * @readonly
  * @enum {number}
@@ -59,7 +59,7 @@ export const ReturnCode = {
  * AE_IFBLK	 0060000
  * AE_IFDIR	 0040000
  * AE_IFIFO	 0010000
- * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_entry.h#L187-L193}
+ * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_entry.h#L184-L191}
  * @readonly
  * @enum {number}
  */
@@ -104,7 +104,7 @@ export const EntryTypeName = {
 
 /**
  * #define AE_IFMT 0170000
- * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.2/libarchive/archive_entry.h#L186}
+ * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_entry.h#L184}
  * @private
  * @type {number}
  */
