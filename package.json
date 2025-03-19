@@ -9,7 +9,7 @@
     "src/**/*"
   ],
   "author": "Vítor Vasconcellos",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "license": "GPL-3.0-or-later",
   "engines": {
     "node": ">=18.4"
@@ -95,7 +95,7 @@
     "neostandard": "^0.12.1",
     "prettier": "3.5.3",
     "typedoc": "^0.28.0",
-    "typedoc-plugin-markdown": "^4.5.0",
+    "typedoc-plugin-markdown": "^4.5.1",
     "typescript": "^5.8.2"
   }
 }

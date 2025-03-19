@@ -6,17 +6,18 @@
 
 > **extractTo**(`data`, `out`, `opts`?): `Promise`\<`void`\>
 
-Extract all supported archive entries inside a given path
+Extracts all supported archive entries to the specified directory.
 
-> Only files, directories, symlinks and hardlinks are supported.
-> Any extra entry type, or invalid entry, in the archive will be skipped (with a warning printed to console)
-> This function throws if it attempts to overwrite any existing file
+> Only files, directories, symlinks, and hardlinks are supported.
+> Any unsupported or invalid entries in the archive are skipped, with a warning printed to the
+> console. If [ExtractToOpts.overwrite](../interfaces/ExtractToExclusiveOpts.md#overwrite) is disabled, this function will throws if it
+> attempts to overwrite an existing file.
 
 ## Parameters
 
 ### data
 
-Archive's data
+The archive data.
 
 `ArrayBufferLike` | `ArrayBufferView`\<`ArrayBufferLike`\>
 
@@ -24,11 +25,11 @@ Archive's data
 
 `string`
 
-Path where the archive entries will be extracted to
+The path where the archive entries will be extracted.
 
 ### opts?
 
-Extract options, string value will be interpreted as password
+Extraction options. A string value is interpreted as the password.
 
 `string` | [`ExtractToOpts`](../type-aliases/ExtractToOpts.md)
 

@@ -124,6 +124,12 @@ export default [
     },
   },
   {
+    files: ['src/path.mjs'],
+    rules: {
+      'licenseHeader/header': 'off',
+    },
+  },
+  {
     files: ['src/wasm/libarchive.mjs', 'src/wasm/libarchive.d.mts'],
     rules: {
       'licenseHeader/header': 'off',

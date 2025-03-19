@@ -59,6 +59,7 @@ const MemoryRegistry = new FinalizationRegistry(pointer => {
 
 /** @private */
 export class Pointer {
+  static NIL = new Pointer(0)
   static NULL = 0
 
   /**

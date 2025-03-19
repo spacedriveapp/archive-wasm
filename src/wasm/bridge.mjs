@@ -298,7 +298,7 @@ const _closeArchive = /** @type {CloseArchiveCb} */ (
  */
 export function closeArchive(archive) {
   try {
-    _closeArchive(archive)
+    if (!archive.isNull()) _closeArchive(archive)
   } finally {
     _openArchiveBuffMap.delete(archive)
     archive.free()

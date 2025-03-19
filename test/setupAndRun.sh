@@ -17,7 +17,7 @@ deps() {
 
 cleanup() {
   printf "\nDeleting test archives...\n" >&2
-  git clean -qfX -e '!IELPKTH.CAB' -e '!GBK.zip' -e '!native-deps-x86_64-linux-gnu.tar.xz' test
+  git clean -qfX -e '!IELPKTH.CAB' -e '!GBK.zip' -e '!native-deps-x86_64-linux-gnu.tar.xz' -e '!moddable-tools-mac64arm.zip' test
 }
 
 download() {
@@ -84,8 +84,21 @@ echo "Creating test archives..." >&2
 compress test/license LICENSE.md PREAMBLE
 compress test/gitignore .gitignore .prettierignore
 
+# Create a nested zip file
+(
+  cd "$(dirname "$0")"
+  echo "the cake is a lie" >congratulations.txt
+  zip -rq nested.zip congratulations.txt
+  rm congratulations.txt
+  for _ in $(seq 1 23); do
+    mkdir inside
+    mv nested.zip inside
+    zip -rq nested.zip inside
+    rm -r inside
+  done
+)
+
 npx -- ava "$@" &
 trap 'kill -s INT $(jobs -pr)' INT
 trap 'kill -s TERM $(jobs -pr)' TERM
 wait %1
-

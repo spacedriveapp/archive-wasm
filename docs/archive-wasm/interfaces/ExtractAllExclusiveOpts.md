@@ -10,4 +10,4 @@
 
 > `optional` **sizeLimit**: `null` \| `bigint`
 
-Limit the total byte size of data to be extracted to avoid memory exhaustion, null means no limit (default: 128MB)
+Limits the total byte size of data to avoid memory exhaustion. Null means no limit (default: 128MB).

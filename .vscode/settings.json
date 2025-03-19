@@ -12,5 +12,6 @@
     "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, pnpm-workspace.yaml, .pnp.cjs, .pnp.loader.mjs, .eslintcache",
     "tsconfig.json": "tsconfig.*.json"
   },
-  "cSpell.words": ["ENULL", "Hardlink", "Spacedrive"]
+  "cSpell.words": ["ENULL", "Hardlink", "Spacedrive"],
+  "editor.rulers": [80, 100, 120]
 }

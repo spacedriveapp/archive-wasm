@@ -10,9 +10,7 @@ set -- WASM true \
   MODULARIZE true \
   FILESYSTEM false \
   RELOCATABLE true \
-  WASM_BIGINT true \
   STANDALONE_WASM true \
-  SUPPORT_LONGJMP "'wasm'" \
   SUPPORT_BIG_ENDIAN true \
   ALLOW_MEMORY_GROWTH true \
   MIN_NODE_VERSION 180000 \

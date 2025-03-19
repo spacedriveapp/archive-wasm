@@ -15,6 +15,7 @@ Idiomatic JavaScript API for extracting most archive files with LibArchive
 ## Classes
 
 - [ArchiveError](classes/ArchiveError.md)
+- [ExceedRecursionLimitError](classes/ExceedRecursionLimitError.md)
 - [ExceedSizeLimitError](classes/ExceedSizeLimitError.md)
 - [FailedError](classes/FailedError.md)
 - [FatalError](classes/FatalError.md)

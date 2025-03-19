@@ -14,7 +14,7 @@
 
 > **new RetryError**(`code`, `message`?): `RetryError`
 
-Main error class
+Creates a new ArchiveError instance.
 
 #### Parameters
 
@@ -22,13 +22,13 @@ Main error class
 
 `number`
 
-Error code
+The error code.
 
 ##### message?
 
 `string`
 
-Error message
+The error message.
 
 #### Returns
 

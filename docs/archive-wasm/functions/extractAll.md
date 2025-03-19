@@ -6,27 +6,25 @@
 
 > **extractAll**(`data`, `opts`?): [`Entry`](../interfaces/Entry.md)[]
 
-Extract all entries in an archive
+Extracts all entries from an archive.
 
-> This function is the preferred choice over `extract` when your use case
-> involves accessing the content data of all entries within the archive,
-> and memory usage is not a critical concern. It provides a performance
-> advantage for this specific scenario by circumventing certain workarounds
-> required to support random-time access to an entry's data within
-> LibArchive's streaming process model. If your goal is to process all
-> entries and retrieve their content, `extractAll` is the recommended method
+> This function is recommended over [extract](extract.md) if you need to retrieve and process the data
+> from all entries within the archive and memory usage is not a concern. It improves performance
+> by skipping certain workarounds required for random access to an entry’s data in LibArchive’s
+> streaming model. If your use case involves accessing all entries and their content, choose
+> extractAll for optimal performance.
 
 ## Parameters
 
 ### data
 
-Archive's data
+The archive’s data.
 
 `ArrayBufferLike` | `ArrayBufferView`\<`ArrayBufferLike`\>
 
 ### opts?
 
-Extract options, string value will be interpreted as password
+Extraction options, or a string interpreted as a password.
 
 `string` | [`ExtractAllOpts`](../type-aliases/ExtractAllOpts.md)
 
@@ -34,4 +32,4 @@ Extract options, string value will be interpreted as password
 
 [`Entry`](../interfaces/Entry.md)[]
 
-List with all entries included in the archive
+A list of entries from the archive.

@@ -14,19 +14,21 @@
 
 > **new PassphraseError**(`code`, `message`?): `PassphraseError`
 
+Creates a new PassphraseError instance.
+
 #### Parameters
 
 ##### code
 
 `number`
 
-Error code
+The error code.
 
 ##### message?
 
 `string`
 
-Error message
+The error message.
 
 #### Returns
 

@@ -3,7 +3,7 @@
 ARG ARM=''
 ARG SYSROOT='/emsdk/upstream/emscripten/cache/sysroot'
 
-FROM docker.io/emscripten/emsdk:3.1.67${ARM} as base
+FROM docker.io/emscripten/emsdk:4.0.5${ARM} as base
 
 SHELL ["/bin/bash", "-euxc"]
 
@@ -258,6 +258,7 @@ RUN emcc ./wrapper.o \
 	-s INCOMING_MODULE_JS_API=[] \
 	-s EMIT_PRODUCERS_SECTION=1 \
 	-s EMIT_EMSCRIPTEN_LICENSE=1 \
+	-s WASM_LEGACY_EXCEPTIONS=0 \
 	-s EXPORTED_RUNTIME_METHODS=cwrap,ccall,HEAP8,HEAP_DATA_VIEW
 
 # --

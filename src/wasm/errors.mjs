@@ -22,25 +22,25 @@
  */
 
 /**
- * errno codes
+ * Error code definitions.
  * Must be kept in sync with the definition in ../../wasm/wrapper.c
  */
-/* Archive requires password to be decrypted error. */
+/** Archive requires a password for decryption. */
 export const EPASS = -37455
-/* Null pointer error */
+/** Null pointer error. */
 export const ENULL = -37456
-/* Unknown or unclassified error. */
+/** Unknown or unclassified error. */
 export const ARCHIVE_ERRNO_MISC = -1
-/* Unrecognized or invalid file format. */
+/** Unrecognized or invalid file format. */
 export const ARCHIVE_ERRNO_FILE_FORMAT = -2
-/* Illegal usage of the library. */
+/** Illegal usage of the library. */
 export const ARCHIVE_ERRNO_PROGRAMMER_ERROR = -3
 
 export class ArchiveError extends Error {
   /**
-   * Main error class
-   * @param {number} code Error code
-   * @param {string} [message] Error message
+   * Creates a new ArchiveError instance.
+   * @param {number} code The error code.
+   * @param {string} [message] The error message.
    */
   constructor(code, message) {
     super(message || 'Unknown error')
@@ -50,7 +50,10 @@ export class ArchiveError extends Error {
 }
 
 export class NullError extends ArchiveError {
-  /** @param {string} [message] Error message */
+  /**
+   * Creates a new NullError instance.
+   * @param {string} [message] The error message.
+   */
   constructor(message) {
     super(ENULL, message || 'Unexpected Pointer.NULL')
   }
@@ -66,8 +69,9 @@ export class FileReadError extends ArchiveError {}
 
 export class PassphraseError extends ArchiveError {
   /**
-   * @param {number} code Error code
-   * @param {string} [message] Error message
+   * Creates a new PassphraseError instance.
+   * @param {number} code The error code.
+   * @param {string} [message] The error message.
    */
   constructor(code, message) {
     super(code, message || 'Passphrase required for this entry')
@@ -75,8 +79,21 @@ export class PassphraseError extends ArchiveError {
 }
 
 export class ExceedSizeLimitError extends ArchiveError {
-  /** @param {string} [message] Error message */
+  /**
+   * Creates a new ExceedSizeLimitError instance.
+   * @param {string} [message] The error message.
+   */
   constructor(message) {
     super(ARCHIVE_ERRNO_MISC, message || 'Archive exceeds the size limit')
+  }
+}
+
+export class ExceedRecursionLimitError extends ArchiveError {
+  /**
+   * Creates a new ExceedRecursionLimitError instance.
+   * @param {string} [message] The error message.
+   */
+  constructor(message) {
+    super(ARCHIVE_ERRNO_MISC, message || 'Archive exceeds the recursion limit')
   }
 }

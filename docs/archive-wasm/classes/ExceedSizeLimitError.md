@@ -14,13 +14,15 @@
 
 > **new ExceedSizeLimitError**(`message`?): `ExceedSizeLimitError`
 
+Creates a new ExceedSizeLimitError instance.
+
 #### Parameters
 
 ##### message?
 
 `string`
 
-Error message
+The error message.
 
 #### Returns
 

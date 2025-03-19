@@ -10,7 +10,7 @@
 
 > **atime**: `bigint`
 
-The timestamp indicating the last time this file was accessed expressed in nanoseconds since the POSIX Epoch
+The timestamp indicating the last time this file was accessed, expressed in nanoseconds since the POSIX Epoch.
 
 ---
 
@@ -18,7 +18,7 @@ The timestamp indicating the last time this file was accessed expressed in nanos
 
 > **birthtime**: `bigint`
 
-The timestamp indicating the creation time of this file expressed in nanoseconds since the POSIX Epoch
+The timestamp indicating this file’s creation time, expressed in nanoseconds since the POSIX Epoch.
 
 ---
 
@@ -26,7 +26,7 @@ The timestamp indicating the creation time of this file expressed in nanoseconds
 
 > **ctime**: `bigint`
 
-The timestamp indicating the last time the file status was changed expressed in nanoseconds since the POSIX Epoch
+The timestamp indicating the last time the file status was changed, expressed in nanoseconds since the POSIX Epoch.
 
 ---
 
@@ -34,7 +34,7 @@ The timestamp indicating the last time the file status was changed expressed in 
 
 > **data**: `ArrayBuffer`
 
-An `ArrayBuffer` containing the entry's data
+An ArrayBuffer containing the entry’s data.
 
 ---
 
@@ -42,7 +42,7 @@ An `ArrayBuffer` containing the entry's data
 
 > **link**: `null` \| `string`
 
-path to actual resource in case this is a symlink or hardlink
+The path to the actual resource if this is a symlink or hardlink.
 
 ---
 
@@ -50,7 +50,7 @@ path to actual resource in case this is a symlink or hardlink
 
 > **mtime**: `bigint`
 
-The timestamp indicating the last time this file was modified expressed in nanoseconds since the POSIX Epoch
+The timestamp indicating the last time this file was modified, expressed in nanoseconds since the POSIX Epoch.
 
 ---
 
@@ -58,7 +58,7 @@ The timestamp indicating the last time this file was modified expressed in nanos
 
 > **path**: `null` \| `string`
 
-Path of the entry within the archive
+The path of the entry within the archive.
 
 ---
 
@@ -66,7 +66,7 @@ Path of the entry within the archive
 
 > **perm**: `number`
 
-A bit-field describing the file type and mode
+A bit field describing the file type and mode.
 
 ---
 
@@ -74,7 +74,7 @@ A bit-field describing the file type and mode
 
 > **size**: `bigint`
 
-Size of the entry in bytes
+The size of the entry in bytes.
 
 ---
 
@@ -82,4 +82,4 @@ Size of the entry in bytes
 
 > **type**: `null` \| [`EntryTypeName`](../enumerations/EntryTypeName.md)
 
-Indicates if the entry is a file, directory or something else
+Indicates if the entry is a file, directory, or another type.

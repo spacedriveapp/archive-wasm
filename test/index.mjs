@@ -26,6 +26,7 @@ import test from 'ava'
 import {
   ArchiveError,
   disableWarning,
+  ExceedRecursionLimitError,
   ExceedSizeLimitError,
   extract,
   extractAll,
@@ -33,7 +34,7 @@ import {
   PassphraseError,
 } from '../src/archive.mjs'
 import { extractTo } from '../src/fs.mjs'
-import { EntryType, EntryTypeName, FILETYPE_FLAG } from '../src/wasm/enums.mjs'
+import { FILETYPE_FLAG } from '../src/wasm/enums.mjs'
 
 // The parent directory for the new temporary directory
 const tmpDir = tmpdir()
@@ -89,7 +90,7 @@ const licenseCheck = (t, archivePath, opts, mode) => {
     t.is(entry.path, path)
     t.is(entry.size, stat.size)
     t.is(entry.perm, ~FILETYPE_FLAG & Number(stat.mode))
-    t.is(entry.type, EntryTypeName[EntryType.FILE] ?? null)
+    t.is(entry.type, 'FILE')
     t.is(entry.link, null)
     t.is(d.decode(entry.data), data)
     t.true(entry.atime >= 0n)
@@ -120,13 +121,13 @@ const gitignoreCheck = (t, archivePath, opts, mode) => {
   t.is(entry.path, '.gitignore')
   t.is(entry.size, gitignoreFileStat.size)
   t.is(entry.perm, ~FILETYPE_FLAG & Number(gitignoreFileStat.mode))
-  t.is(entry.type, EntryTypeName[EntryType.FILE] ?? null)
+  t.is(entry.type, 'FILE')
   t.is(entry.link, null)
   t.is(d.decode(entry.data), gitignoreFile)
 
   entry = getNextEntry(t, entries, i++)
   t.is(entry.path, '.prettierignore')
-  t.is(entry.type, EntryTypeName[EntryType.SYMBOLIC_LINK] ?? null)
+  t.is(entry.type, 'SYMBOLIC_LINK')
   t.is(entry.link, '.gitignore')
   t.is(entry.data.byteLength, 0)
 
@@ -194,10 +195,12 @@ test('Test recursive zip bomb', t => {
   // from: https://github.com/iamtraction/ZOD
   const archiveFile = fs.readFileSync(new URL('bomb.zip', import.meta.url))
   t.notThrows(() => Array.from(extract(archiveFile, '42')))
-  t.notThrows(() => Array.from(extract(archiveFile, { passphrase: '42', recursive: true })))
+  t.throws(() => Array.from(extract(archiveFile, { passphrase: '42', recursive: true })), {
+    instanceOf: FileReadError,
+  })
   t.notThrows(() => extractAll(archiveFile, '42'))
   t.throws(() => extractAll(archiveFile, { passphrase: '42', recursive: true }), {
-    instanceOf: ExceedSizeLimitError,
+    instanceOf: FileReadError,
   })
 })
 
@@ -207,6 +210,19 @@ test('Test non recursive zip bomb', t => {
   t.notThrows(() => Array.from(extract(archiveFile)))
   t.throws(() => extractAll(archiveFile), {
     instanceOf: ExceedSizeLimitError,
+  })
+})
+
+test('Test recursion limit', t => {
+  // from: https://github.com/iamtraction/ZOD
+  const archiveFile = fs.readFileSync(new URL('nested.zip', import.meta.url))
+  t.notThrows(() => Array.from(extract(archiveFile)))
+  t.throws(() => Array.from(extract(archiveFile, { recursive: true })), {
+    instanceOf: ExceedRecursionLimitError,
+  })
+  t.notThrows(() => extractAll(archiveFile))
+  t.throws(() => extractAll(archiveFile, { passphrase: '42', recursive: true }), {
+    instanceOf: ExceedRecursionLimitError,
   })
 })
 
@@ -239,11 +255,26 @@ const IELPKTH_MD5 = /** @type {Record<string, string>} */ ({
   'csseqchk.dll': '5db2f9eda2fb505e77b3e634b6202f52',
 })
 
-test('Test IELPKTH.CAB', t => {
+test('Test IELPKTH.CAB in-loop', t => {
   // from: https://github.com/iamtraction/ZOD
   const archiveFile = fs.readFileSync(new URL('IELPKTH.CAB', import.meta.url))
 
   for (const entry of extract(archiveFile)) {
+    t.assert(entry.path != null)
+    const md5 = IELPKTH_MD5[/** @type {string} */ (entry.path)]
+    t.assert(typeof md5 === 'string')
+
+    const hashFunc = createHash('md5')
+    hashFunc.update(Buffer.from(entry.data))
+    t.is(md5, hashFunc.digest('hex'))
+  }
+})
+
+test('Test IELPKTH.CAB out-loop', t => {
+  // from: https://github.com/iamtraction/ZOD
+  const archiveFile = fs.readFileSync(new URL('IELPKTH.CAB', import.meta.url))
+
+  for (const entry of Array.from(extract(archiveFile))) {
     t.assert(entry.path != null)
     const md5 = IELPKTH_MD5[/** @type {string} */ (entry.path)]
     t.assert(typeof md5 === 'string')
@@ -300,7 +331,7 @@ test("Test extract's ignoreDotDir option", t => {
   let iter = extract(archiveFile, { ignoreDotDir: false })
   let entry = iter.next().value
   t.is(entry?.path, '.')
-  t.is(entry?.type, EntryTypeName[EntryType.DIR] ?? null)
+  t.is(entry?.type, 'DIR')
 
   iter = extract(archiveFile, { ignoreDotDir: true })
   entry = iter.next().value
@@ -324,14 +355,12 @@ test('Test Spacedrive native-deps', async t => {
 })
 
 test('Test Moddable tools include', async t => {
-  t.timeout(10 * 1000)
-
   const archiveFile = fs.readFileSync(new URL('moddable-tools-mac64arm.zip ', import.meta.url))
   const tempDir = fs.mkdtempSync(path.join(tmpDir, 'moddable-tools-'))
 
   try {
     await extractTo(archiveFile, tempDir, {
-      included: [/^xs/],
+      include: [/^xs/],
     })
 
     const files = fs.readdirSync(tempDir)
@@ -340,19 +369,17 @@ test('Test Moddable tools include', async t => {
       t.true(file.startsWith('xs'))
     }
   } finally {
-    fs.rmdirSync(tempDir, { recursive: true })
+    fs.rmSync(tempDir, { recursive: true })
   }
 })
 
 test('Test Moddable tools exclude', async t => {
-  t.timeout(10 * 1000)
-
   const archiveFile = fs.readFileSync(new URL('moddable-tools-mac64arm.zip ', import.meta.url))
   const tempDir = fs.mkdtempSync(path.join(tmpDir, 'moddable-tools-'))
 
   try {
     await extractTo(archiveFile, tempDir, {
-      excluded: [/^xs/],
+      exclude: [/^xs/],
     })
 
     const files = fs.readdirSync(tempDir)
@@ -361,20 +388,18 @@ test('Test Moddable tools exclude', async t => {
       t.false(file.startsWith('xs'))
     }
   } finally {
-    fs.rmdirSync(tempDir, { recursive: true })
+    fs.rmSync(tempDir, { recursive: true })
   }
 })
 
 test('Test Moddable tools include ^xs but exclude ^xsbug.app(\\/|$)', async t => {
-  t.timeout(10 * 1000)
-
   const archiveFile = fs.readFileSync(new URL('moddable-tools-mac64arm.zip ', import.meta.url))
   const tempDir = fs.mkdtempSync(path.join(tmpDir, 'moddable-tools-'))
 
   try {
     await extractTo(archiveFile, tempDir, {
-      included: [/^xs/],
-      excluded: [/^xsbug\.app(\/|$)/],
+      include: [/^xs/],
+      exclude: [/^xsbug\.app(\/|$)/],
     })
 
     const files = fs.readdirSync(tempDir)
@@ -384,6 +409,85 @@ test('Test Moddable tools include ^xs but exclude ^xsbug.app(\\/|$)', async t =>
       t.not(file, 'xsbug.app')
     }
   } finally {
-    fs.rmdirSync(tempDir, { recursive: true })
+    fs.rmSync(tempDir, { recursive: true })
   }
+})
+
+const FILES_IN_TEST_RECURSION = [
+  'main.js',
+  '.gitignore',
+  'README.md',
+  'manifest.json',
+  'site',
+  'modules',
+  'modules/httpzip.js',
+  'modules/rewritespa.js',
+  'modules/webserver.js',
+  'modules/hotspot.js',
+  'modules/websocket.js',
+  'modules/status.js',
+  'modules/manifest.json',
+  'site/dist',
+  'site/wmr.config.mjs',
+  'site/public',
+  'site/package.json',
+  'site/public/index.html',
+  'site/public/app.ts',
+  'site/public/stylesheet.css',
+  'site/public/moddable.svg',
+  'site/public/model.js',
+  'site/dist/site.zip',
+]
+
+const FILES_IN_TEST_RECURSION_INNER_ZIP = [
+  'site/dist/index.html',
+  'site/dist/assets/stylesheet.63d6411e.css',
+  'site/dist/app.2b529c4f.js',
+  'site/dist/moddable.svg',
+]
+
+test('Test recursive extraction of test-recursion.tar.gz with stripComponents=0', async t => {
+  const files = FILES_IN_TEST_RECURSION.flatMap(f =>
+    f === 'site/dist/site.zip' ? FILES_IN_TEST_RECURSION_INNER_ZIP : f
+  )
+  const archive = fs.readFileSync(new URL('test-recursion.tar.gz', import.meta.url))
+  const extracted = extractAll(archive, { stripComponents: 0, recursive: true })
+  t.deepEqual(
+    files,
+    extracted.map(f => f.path)
+  )
+})
+
+for (const stripComponents of [1, 2, 3]) {
+  test(`Test non-recursive extraction of test-recursion.tar.gz with stripComponents=${stripComponents}`, t => {
+    const files = FILES_IN_TEST_RECURSION.map(f =>
+      f.split('/').slice(stripComponents).join('/')
+    ).filter(Boolean)
+    const archive = fs.readFileSync(new URL('test-recursion.tar.gz', import.meta.url))
+    const extracted = extractAll(archive, { stripComponents })
+    t.deepEqual(
+      files,
+      extracted.map(f => f.path)
+    )
+  })
+}
+
+test(`Test test-recursion.tar.gz with baseDir option`, t => {
+  const files = FILES_IN_TEST_RECURSION.map(f => `test-recursion/${f}`)
+  const archive = fs.readFileSync(new URL('test-recursion.tar.gz', import.meta.url))
+  const extracted = extractAll(archive, { baseDir: 'test-recursion' })
+  t.deepEqual(
+    files,
+    extracted.map(f => f.path)
+  )
+})
+
+test(`Test test-recursion.tar.gz with normalize option`, t => {
+  const files = FILES_IN_TEST_RECURSION.map(f => `test-recursion/${f}`)
+  const archive = fs.readFileSync(new URL('test-recursion.tar.gz', import.meta.url))
+  const extracted = extractAll(archive, { normalize: false })
+  t.notDeepEqual(
+    files,
+    extracted.map(f => f.path)
+  )
 })

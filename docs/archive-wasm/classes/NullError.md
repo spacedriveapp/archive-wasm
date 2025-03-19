@@ -14,13 +14,15 @@
 
 > **new NullError**(`message`?): `NullError`
 
+Creates a new NullError instance.
+
 #### Parameters
 
 ##### message?
 
 `string`
 
-Error message
+The error message.
 
 #### Returns
 

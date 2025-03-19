@@ -3,4 +3,5 @@
 !*.mjs
 !bomb.zip
 !bombNonRecursive.zip
+!test-recursion.tar.gz
 !.gitignore

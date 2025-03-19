@@ -4,7 +4,7 @@
 
 # Enumeration: EntryTypeName
 
-Mapping for all possible entry types:
+Maps each EntryType to a string identifier:
 
 - FILE
 - NAMED_PIPE
@@ -12,4 +12,4 @@ Mapping for all possible entry types:
 - DIR
 - BLOCK_DEVICE
 - SYMBOLIC_LINK
-- CHARACTER_DEVIC
+- CHARACTER_DEVICE

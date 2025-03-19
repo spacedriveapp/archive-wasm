@@ -4,6 +4,6 @@
 
 # Type Alias: ExtractToOpts
 
-> **ExtractToOpts**\<\> = [`ExtractAllOpts`](../../../type-aliases/ExtractAllOpts.md) & [`ExtractToExclusiveOpts`](../interfaces/ExtractToExclusiveOpts.md)
+> **ExtractToOpts**\<\> = `Exclude`\<[`ExtractAllOpts`](../../../type-aliases/ExtractAllOpts.md), `"ignoreDotDir"`\> & [`ExtractToExclusiveOpts`](../interfaces/ExtractToExclusiveOpts.md)
 
 ## Type Parameters

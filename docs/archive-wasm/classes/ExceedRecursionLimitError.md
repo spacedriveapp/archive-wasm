@@ -2,7 +2,7 @@
 
 ---
 
-# Class: FailedError
+# Class: ExceedRecursionLimitError
 
 ## Extends
 
@@ -10,19 +10,13 @@
 
 ## Constructors
 
-### new FailedError()
+### new ExceedRecursionLimitError()
 
-> **new FailedError**(`code`, `message`?): `FailedError`
+> **new ExceedRecursionLimitError**(`message`?): `ExceedRecursionLimitError`
 
-Creates a new ArchiveError instance.
+Creates a new ExceedRecursionLimitError instance.
 
 #### Parameters
-
-##### code
-
-`number`
-
-The error code.
 
 ##### message?
 
@@ -32,9 +26,9 @@ The error message.
 
 #### Returns
 
-`FailedError`
+`ExceedRecursionLimitError`
 
-#### Inherited from
+#### Overrides
 
 [`ArchiveError`](ArchiveError.md).[`constructor`](ArchiveError.md#constructor)
 

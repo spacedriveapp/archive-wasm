@@ -22,18 +22,18 @@
  */
 
 /**
- * Error codes: Use archive_errno() and archive_error_string()
- * to retrieve details.  Unless specified otherwise, all functions
- * that return 'int' use these codes.
+ * Error codes for LibArchive. Use archive_errno() and archive_error_string()
+ * to retrieve additional details. Unless otherwise specified, all functions
+ * returning an integer use these codes.
  *
- * ARCHIVE_EOF    1	    // Found end of archive.
- * ARCHIVE_OK	    0	    // Operation was successful.
- * ARCHIVE_RETRY	(-10)	// Retry might succeed.
- * ARCHIVE_WARN	  (-20)	// Partial success.
- * // For example, if write_header "fails", then you can't push data.
- * ARCHIVE_FAILED	(-25)	// Current operation cannot complete.
- * // But if write_header is "fatal," then this archive is dead and useless.
- * ARCHIVE_FATAL	(-30)	// No more operations are possible.
+ * | Code           | Value | Description        |
+ * |----------------|-------|--------------------|
+ * | ARCHIVE_EOF    |   1 | End of archive.      |
+ * | ARCHIVE_OK     |   0 | Operation succeeded. |
+ * | ARCHIVE_RETRY  | -10 | Retry may succeed.   |
+ * | ARCHIVE_WARN   | -20 | Partial success.     |
+ * | ARCHIVE_FAILED | -25 | The current operation cannot complete. |
+ * | ARCHIVE_FATAL  | -30 | No further operations are possible. |
  * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive.h#L186-L198}
  * @private
  * @readonly
@@ -49,16 +49,18 @@ export const ReturnCode = {
 }
 
 /**
- * File-type constants
- * These are returned from archive_entry_filetype() and passed to archive_entry_set_filetype()
+ * File-type constants for LibArchive. Returned by archive_entry_filetype() and
+ * used by archive_entry_set_filetype().
  *
- * AE_IFREG	 0100000
- * AE_IFLNK	 0120000
- * AE_IFSOCK 0140000
- * AE_IFCHR	 0020000
- * AE_IFBLK	 0060000
- * AE_IFDIR	 0040000
- * AE_IFIFO	 0010000
+ * | Constant  | Value   |
+ * |-----------|---------|
+ * | AE_IFREG  | 0100000 |
+ * | AE_IFLNK  | 0120000 |
+ * | AE_IFSOCK | 0140000 |
+ * | AE_IFCHR  | 0020000 |
+ * | AE_IFBLK  | 0060000 |
+ * | AE_IFDIR  | 0040000 |
+ * | AE_IFIFO  | 0010000 |
  * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_entry.h#L184-L191}
  * @readonly
  * @enum {number}
@@ -74,14 +76,14 @@ export const EntryType = {
 }
 
 /**
- * Mapping for all possible entry types:
+ * Maps each EntryType to a string identifier:
  * - FILE
  * - NAMED_PIPE
  * - SOCKET
  * - DIR
  * - BLOCK_DEVICE
  * - SYMBOLIC_LINK
- * - CHARACTER_DEVIC
+ * - CHARACTER_DEVICE
  * @readonly
  * @enum { 'FILE' | 'NAMED_PIPE' | 'SOCKET' | 'DIR' | 'BLOCK_DEVICE' | 'SYMBOLIC_LINK' | 'CHARACTER_DEVICE'}
  */
@@ -103,6 +105,8 @@ export const EntryTypeName = {
 }
 
 /**
+ * Mask representing the file type bits.
+ *
  * #define AE_IFMT 0170000
  * @see {@link https://github.com/libarchive/libarchive/blob/v3.7.7/libarchive/archive_entry.h#L184}
  * @private

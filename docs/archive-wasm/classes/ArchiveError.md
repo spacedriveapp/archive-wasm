@@ -17,6 +17,7 @@
 - [`FileReadError`](FileReadError.md)
 - [`PassphraseError`](PassphraseError.md)
 - [`ExceedSizeLimitError`](ExceedSizeLimitError.md)
+- [`ExceedRecursionLimitError`](ExceedRecursionLimitError.md)
 
 ## Constructors
 
@@ -24,7 +25,7 @@
 
 > **new ArchiveError**(`code`, `message`?): `ArchiveError`
 
-Main error class
+Creates a new ArchiveError instance.
 
 #### Parameters
 
@@ -32,13 +33,13 @@ Main error class
 
 `number`
 
-Error code
+The error code.
 
 ##### message?
 
 `string`
 
-Error message
+The error message.
 
 #### Returns
 

@@ -164,28 +164,27 @@ async function writeFile(filePath, data, perm, atime, mtime, overwrite) {
 }
 
 /**
- * Exclusive options for {@link extractTo}
+ * Exclusive options for {@link extractTo}.
  * @typedef {object} ExtractToExclusiveOpts
- * @property {number} [chmod] Permission flag to be AND'ed to all extracted entires permissions (The oposite of umask)
- * @property {boolean} [overwrite] Allow overwriting files
- * @property {bigint?} [sizeLimit] Limit the total byte size of data to be extracted to avoid memory exhaustion, null means no limit (default: 128MB)
- * @property {RegExp[]?} [included] List of regex patterns to filter which entries should be extracted
- * @property {RegExp[]?} [excluded] List of regex patterns to filter which entries should be ignored
+ * @property {number} [chmod] Permission flag that is AND’ed with all extracted entries permissions (the opposite of umask).
+ * @property {boolean} [overwrite] Whether to allow overwriting existing files. The default is false.
  */
 
 /**
- * Options for {@link extractTo}
- * @typedef {import("./archive.mjs").ExtractAllOpts & ExtractToExclusiveOpts} ExtractToOpts
+ * Options for {@link extractTo}.
+ * @typedef {Exclude<import("./archive.mjs").ExtractAllOpts, 'ignoreDotDir'> & ExtractToExclusiveOpts} ExtractToOpts
  */
 
 /**
- * Extract all supported archive entries inside a given path
- * > Only files, directories, symlinks and hardlinks are supported.
- *   Any extra entry type, or invalid entry, in the archive will be skipped (with a warning printed to console)
- *   This function throws if it attempts to overwrite any existing file
- * @param {ArrayBufferView | ArrayBufferLike} data Archive's data
- * @param {string} out Path where the archive entries will be extracted to
- * @param {string | ExtractToOpts} [opts] Extract options, string value will be interpreted as password
+ * Extracts all supported archive entries to the specified directory.
+ *
+ * > Only files, directories, symlinks, and hardlinks are supported.
+ * Any unsupported or invalid entries in the archive are skipped, with a warning printed to the
+ * console. If {@link ExtractToOpts.overwrite} is disabled, this function will throws if it
+ * attempts to overwrite an existing file.
+ * @param {ArrayBufferView | ArrayBufferLike} data The archive data.
+ * @param {string} out The path where the archive entries will be extracted.
+ * @param {string | ExtractToOpts} [opts] Extraction options. A string value is interpreted as the password.
  */
 export async function extractTo(data, out, opts) {
   if (
@@ -199,12 +198,20 @@ export async function extractTo(data, out, opts) {
   let chmod = 0
   let overwrite = false
   if (opts && typeof opts === 'object') {
-    if (opts.chmod != null) chmod = opts.chmod
-    if (opts.overwrite != null) overwrite = opts.overwrite
+    if (opts.chmod !== undefined) {
+      if (typeof opts.chmod !== 'number')
+        throw new TypeError('Invalid chmod option, expected a number')
+      chmod = opts.chmod
+    }
+    if (opts.chmod !== undefined) {
+      if (typeof opts.overwrite !== 'boolean')
+        throw new TypeError('Invalid overwrite option, expected a boolean')
+      overwrite = opts.overwrite
+    }
+
     opts.ignoreDotDir = true
   }
 
-  const { included, excluded } = opts && typeof opts === 'object' ? opts : {}
   for (const entry of extractAll(data, opts)) {
     if (entry.path == null) {
       if (WARNING) console.warn('Ignoring empty path entry')
@@ -215,24 +222,10 @@ export async function extractTo(data, out, opts) {
     if (!entryPath || entryPath.startsWith('..') || path.isAbsolute(entryPath)) {
       if (WARNING)
         console.warn(
-          `Entry has a path the goes outside the request out dir: ${entry.path}, skipping...`
+          `Entry has a path that goes outside the requested output dir: ${entry.path}, skipping...`
         )
       continue
     }
-
-    if (Array.isArray(included)) {
-      if (included.length === 0) {
-        if (WARNING)
-          console.warn(
-            `No entries will be extracted because the include list is empty, skipping...`
-          )
-        continue
-      }
-
-      if (!included.some(re => re.test(entryPath))) continue
-    }
-
-    if (Array.isArray(excluded) && excluded.some(re => re.test(entryPath))) continue
 
     entryPath = path.resolve(out, entry.path)
 
@@ -240,7 +233,7 @@ export async function extractTo(data, out, opts) {
     switch (entry.type) {
       case null:
         if (entry.link === null) {
-          if (WARNING) console.warn(`Invalid hardlink: ${entry.path}, skiping...`)
+          if (WARNING) console.warn(`Invalid hardlink: ${entry.path}, skipping...`)
         } else {
           await hardlink(entryPath, entry.link, perms, entry.atime, entry.mtime, overwrite)
         }
@@ -254,13 +247,13 @@ export async function extractTo(data, out, opts) {
       }
       case 'SYMBOLIC_LINK':
         if (entry.link == null) {
-          if (WARNING) console.warn(`Invalid symlink: ${entry.path}, skiping...`)
+          if (WARNING) console.warn(`Invalid symlink: ${entry.path}, skipping...`)
         } else {
           await symlink(entryPath, entry.link, perms, entry.atime, entry.mtime, overwrite)
         }
         break
       default:
-        if (WARNING) console.warn(`Unsupported entry type: ${entry.type}, skiping...`)
+        if (WARNING) console.warn(`Unsupported entry type: ${entry.type}, skipping...`)
         break
     }
   }
