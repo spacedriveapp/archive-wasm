@@ -18,4 +18,4 @@ Permission flag that is AND’ed with all extracted entries permissions (the opp
 
 > `optional` **overwrite**: `boolean`
 
-Whether to allow overwriting existing files. Defaults to false.
+Whether to allow overwriting existing files. The default is false.
